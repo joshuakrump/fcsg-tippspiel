@@ -3,10 +3,14 @@
 import { fromZonedTime } from "date-fns-tz";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { isAdmin } from "@/lib/admin";
-import { createAdminClient } from "@/lib/supabase/admin-client";
 import { cookies } from "next/headers";
 
+import { isAdmin } from "@/lib/admin";
+import { createAdminClient } from "@/lib/supabase/admin-client";
+
+/*
+ * ADMIN PRÜFEN
+ */
 async function requireAdmin() {
   const admin = await isAdmin();
 
@@ -15,13 +19,30 @@ async function requireAdmin() {
   }
 }
 
-// NEUES SPIEL ERSTELLEN
+/*
+ * ALLE RELEVANTEN SEITEN AKTUALISIEREN
+ */
+function revalidateGamePages() {
+  revalidatePath("/");
+  revalidatePath("/ergebnisse");
+  revalidatePath("/rangliste");
+  revalidatePath("/admin");
+  revalidatePath("/admin/abgeschlossen");
+}
+
+/*
+ * NEUES SPIEL MANUELL ERSTELLEN
+ */
 export async function createMatch(formData: FormData) {
   await requireAdmin();
 
   const teamId = Number(formData.get("teamId"));
-  const kickoffLocal = String(formData.get("kickoff") ?? "");
-  const location = String(formData.get("location") ?? "");
+  const kickoffLocal = String(
+    formData.get("kickoff") ?? ""
+  );
+  const location = String(
+    formData.get("location") ?? ""
+  );
 
   if (
     !Number.isInteger(teamId) ||
@@ -33,22 +54,29 @@ export async function createMatch(formData: FormData) {
 
   const supabase = createAdminClient();
 
-  // Gegner aus unserer Team-Tabelle laden
-  const { data: team, error: teamError } = await supabase
-    .from("teams")
-    .select("id, name,short_name, logo_path")
-    .eq("id", teamId)
-    .single();
+  const { data: team, error: teamError } =
+    await supabase
+      .from("teams")
+      .select(
+        "id, name, short_name, logo_path"
+      )
+      .eq("id", teamId)
+      .single();
 
   if (teamError || !team) {
     throw new Error(
-      teamError?.message ?? "Gegner konnte nicht gefunden werden."
+      teamError?.message ??
+        "Gegner konnte nicht gefunden werden."
     );
   }
 
-  // Sicherheit: FCSG darf nicht Gegner von sich selbst sein
-  if (team.short_name === "FCSG" || team.name === "FC St. Gallen") {
-    throw new Error("FC St. Gallen kann nicht als Gegner gewählt werden.");
+  if (
+    team.short_name === "FCSG" ||
+    team.name === "FC St. Gallen"
+  ) {
+    throw new Error(
+      "FC St. Gallen kann nicht als Gegner gewählt werden."
+    );
   }
 
   const { error } = await supabase
@@ -63,7 +91,6 @@ export async function createMatch(formData: FormData) {
 
       is_home: location === "home",
 
-      // Die Spalte haben wir bereits erstellt.
       opponent_logo: team.logo_path,
 
       finished: false,
@@ -73,17 +100,28 @@ export async function createMatch(formData: FormData) {
     throw new Error(error.message);
   }
 
-  revalidatePath("/");
-  revalidatePath("/admin");
+  revalidateGamePages();
 }
 
-// SPIEL ABSCHLIESSEN
-export async function finishMatch(formData: FormData) {
+/*
+ * SPIEL MANUELL ABSCHLIESSEN
+ */
+export async function finishMatch(
+  formData: FormData
+) {
   await requireAdmin();
 
-  const matchId = Number(formData.get("matchId"));
-  const fcsgScore = Number(formData.get("fcsgScore"));
-  const opponentScore = Number(formData.get("opponentScore"));
+  const matchId = Number(
+    formData.get("matchId")
+  );
+
+  const fcsgScore = Number(
+    formData.get("fcsgScore")
+  );
+
+  const opponentScore = Number(
+    formData.get("opponentScore")
+  );
 
   if (
     !Number.isInteger(matchId) ||
@@ -110,23 +148,38 @@ export async function finishMatch(formData: FormData) {
     throw new Error(error.message);
   }
 
-  revalidatePath("/");
-  revalidatePath("/admin");
+  revalidateGamePages();
 }
 
-// SPIEL BEARBEITEN
-export async function updateMatch(formData: FormData) {
+/*
+ * OFFENES SPIEL BEARBEITEN
+ */
+export async function updateMatch(
+  formData: FormData
+) {
   await requireAdmin();
 
-  const matchId = Number(formData.get("matchId"));
-  const opponent = String(formData.get("opponent") ?? "").trim();
-  const kickoffLocal = String(formData.get("kickoff") ?? "");
-  const location = String(formData.get("location") ?? "");
+  const matchId = Number(
+    formData.get("matchId")
+  );
+
+  const opponent = String(
+    formData.get("opponent") ?? ""
+  ).trim();
+
+  const kickoffLocal = String(
+    formData.get("kickoff") ?? ""
+  );
+
+  const location = String(
+    formData.get("location") ?? ""
+  );
 
   if (
     !Number.isInteger(matchId) ||
     !opponent ||
-    !kickoffLocal
+    !kickoffLocal ||
+    !["home", "away"].includes(location)
   ) {
     return;
   }
@@ -139,10 +192,12 @@ export async function updateMatch(formData: FormData) {
     .from("matches")
     .update({
       opponent,
+
       kickoff: fromZonedTime(
         kickoffLocal,
         "Europe/Zurich"
       ).toISOString(),
+
       is_home: isHome,
     })
     .eq("id", matchId);
@@ -151,15 +206,20 @@ export async function updateMatch(formData: FormData) {
     throw new Error(error.message);
   }
 
-  revalidatePath("/");
-  revalidatePath("/admin");
+  revalidateGamePages();
 }
 
-// SPIEL LÖSCHEN
-export async function deleteMatch(formData: FormData) {
+/*
+ * SPIEL LÖSCHEN
+ */
+export async function deleteMatch(
+  formData: FormData
+) {
   await requireAdmin();
 
-  const matchId = Number(formData.get("matchId"));
+  const matchId = Number(
+    formData.get("matchId")
+  );
 
   if (!Number.isInteger(matchId)) {
     return;
@@ -176,30 +236,59 @@ export async function deleteMatch(formData: FormData) {
     throw new Error(error.message);
   }
 
-  revalidatePath("/");
-  revalidatePath("/admin");
+  revalidateGamePages();
 }
+
+/*
+ * ADMIN ABMELDEN
+ */
 export async function adminLogout() {
   const cookieStore = await cookies();
 
-  cookieStore.delete("fcsg-admin-session");
+  cookieStore.delete(
+    "fcsg-admin-session"
+  );
 
   redirect("/admin-login");
 }
-export async function updateFinishedMatch(formData: FormData) {
+
+/*
+ * ABGESCHLOSSENES SPIEL BEARBEITEN
+ */
+export async function updateFinishedMatch(
+  formData: FormData
+) {
   await requireAdmin();
 
-  const matchId = Number(formData.get("matchId"));
-  const opponent = String(formData.get("opponent") ?? "").trim();
-  const kickoffLocal = String(formData.get("kickoff") ?? "");
-  const location = String(formData.get("location") ?? "");
-  const fcsgScore = Number(formData.get("fcsgScore"));
-  const opponentScore = Number(formData.get("opponentScore"));
+  const matchId = Number(
+    formData.get("matchId")
+  );
+
+  const opponent = String(
+    formData.get("opponent") ?? ""
+  ).trim();
+
+  const kickoffLocal = String(
+    formData.get("kickoff") ?? ""
+  );
+
+  const location = String(
+    formData.get("location") ?? ""
+  );
+
+  const fcsgScore = Number(
+    formData.get("fcsgScore")
+  );
+
+  const opponentScore = Number(
+    formData.get("opponentScore")
+  );
 
   if (
     !Number.isInteger(matchId) ||
     !opponent ||
     !kickoffLocal ||
+    !["home", "away"].includes(location) ||
     !Number.isInteger(fcsgScore) ||
     !Number.isInteger(opponentScore) ||
     fcsgScore < 0 ||
@@ -209,19 +298,25 @@ export async function updateFinishedMatch(formData: FormData) {
   }
 
   const isHome = location === "home";
+
   const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("matches")
     .update({
       opponent,
+
       kickoff: fromZonedTime(
-  kickoffLocal,
-  "Europe/Zurich"
-).toISOString(),
+        kickoffLocal,
+        "Europe/Zurich"
+      ).toISOString(),
+
       is_home: isHome,
+
       fcsg_score: fcsgScore,
+
       opponent_score: opponentScore,
+
       finished: true,
     })
     .eq("id", matchId);
@@ -230,22 +325,34 @@ export async function updateFinishedMatch(formData: FormData) {
     throw new Error(error.message);
   }
 
-  revalidatePath("/");
-  revalidatePath("/rangliste");
-  revalidatePath("/admin");
-  revalidatePath("/admin/abgeschlossen");
+  revalidateGamePages();
 }
-export async function importMatchesForMonth(formData: FormData) {
+
+/*
+ * FCSG SUPER-LEAGUE SPIELE
+ * EINES MONATS IMPORTIEREN
+ */
+export async function importMatchesForMonth(
+  formData: FormData
+) {
   await requireAdmin();
 
-  const apiKey = process.env.API_FOOTBALL_KEY;
+  const apiKey =
+    process.env.API_FOOTBALL_KEY;
 
   if (!apiKey) {
-    throw new Error("API_FOOTBALL_KEY fehlt.");
+    throw new Error(
+      "API_FOOTBALL_KEY fehlt."
+    );
   }
 
-  const year = Number(formData.get("year"));
-  const month = Number(formData.get("month"));
+  const year = Number(
+    formData.get("year")
+  );
+
+  const month = Number(
+    formData.get("month")
+  );
 
   if (
     !Number.isInteger(year) ||
@@ -253,33 +360,49 @@ export async function importMatchesForMonth(formData: FormData) {
     month < 1 ||
     month > 12
   ) {
-    throw new Error("Ungültiger Monat.");
+    throw new Error(
+      "Ungültiger Monat."
+    );
   }
 
-  const supabase = createAdminClient();
+  const supabase =
+    createAdminClient();
 
   const FCSG_TEAM_ID = 1011;
   const SUPER_LEAGUE_ID = 207;
 
-  // Saison wird über das Startjahr definiert.
-  // Beispiel: August 2026 = Saison 2026/27.
+  /*
+   * Saison wird über das Startjahr angegeben.
+   *
+   * August 2026 → Saison 2026
+   * März 2027   → Saison 2026
+   */
   const season =
     month >= 7
       ? year
       : year - 1;
 
-  const firstDay = `${year}-${String(month).padStart(2, "0")}-01`;
+  const firstDay =
+    `${year}-${String(month).padStart(
+      2,
+      "0"
+    )}-01`;
 
-  const lastDayNumber = new Date(
-    year,
-    month,
-    0
-  ).getDate();
+  const lastDayNumber =
+    new Date(
+      year,
+      month,
+      0
+    ).getDate();
 
   const lastDay =
-    `${year}-${String(month).padStart(2, "0")}-${String(
-      lastDayNumber
-    ).padStart(2, "0")}`;
+    `${year}-${String(month).padStart(
+      2,
+      "0"
+    )}-${String(lastDayNumber).padStart(
+      2,
+      "0"
+    )}`;
 
   const url =
     `https://v3.football.api-sports.io/fixtures` +
@@ -289,12 +412,17 @@ export async function importMatchesForMonth(formData: FormData) {
     `&from=${firstDay}` +
     `&to=${lastDay}`;
 
-  const response = await fetch(url, {
-    headers: {
-      "x-apisports-key": apiKey,
-    },
-    cache: "no-store",
-  });
+  const response = await fetch(
+    url,
+    {
+      headers: {
+        "x-apisports-key":
+          apiKey,
+      },
+
+      cache: "no-store",
+    }
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -302,80 +430,119 @@ export async function importMatchesForMonth(formData: FormData) {
     );
   }
 
-  const apiData = await response.json();
+  const apiData =
+    await response.json();
 
   if (
     apiData.errors &&
-    Object.keys(apiData.errors).length > 0
+    Object.keys(apiData.errors)
+      .length > 0
   ) {
     throw new Error(
-      `API-Football: ${JSON.stringify(apiData.errors)}`
+      `API-Football: ${JSON.stringify(
+        apiData.errors
+      )}`
     );
   }
 
-  const fixtures = apiData.response ?? [];
+  const fixtures =
+    apiData.response ?? [];
 
   for (const item of fixtures) {
-    const fixtureId = item.fixture?.id;
+    const fixtureId =
+      item.fixture?.id;
 
     if (!fixtureId) {
       continue;
     }
 
-    // Prüfen, ob dieses API-Spiel schon vorhanden ist
-    const { data: existingMatch } = await supabase
+    /*
+     * DOPPELTE SPIELE VERHINDERN
+     */
+    const {
+      data: existingMatch,
+    } = await supabase
       .from("matches")
       .select("id")
-      .eq("api_fixture_id", fixtureId)
+      .eq(
+        "api_fixture_id",
+        fixtureId
+      )
       .maybeSingle();
 
     if (existingMatch) {
       continue;
     }
 
-    const homeTeam = item.teams?.home;
-    const awayTeam = item.teams?.away;
+    const homeTeam =
+      item.teams?.home;
 
-    if (!homeTeam || !awayTeam) {
+    const awayTeam =
+      item.teams?.away;
+
+    if (
+      !homeTeam ||
+      !awayTeam
+    ) {
       continue;
     }
 
     const fcsgIsHome =
-      homeTeam.id === FCSG_TEAM_ID;
+      Number(homeTeam.id) ===
+      FCSG_TEAM_ID;
 
-    const opponentApiTeam = fcsgIsHome
-      ? awayTeam
-      : homeTeam;
+    const opponentApiTeam =
+      fcsgIsHome
+        ? awayTeam
+        : homeTeam;
 
-    // Gegner über Namen in unserer teams-Tabelle suchen
-    const { data: localTeam } = await supabase
+    /*
+     * LOGO / NAME AUS UNSERER
+     * TEAM-TABELLE HOLEN
+     */
+    const {
+      data: localTeam,
+    } = await supabase
       .from("teams")
-      .select("name, logo_path")
-      .ilike("name", opponentApiTeam.name)
+      .select(
+        "name, logo_path"
+      )
+      .ilike(
+        "name",
+        opponentApiTeam.name
+      )
       .maybeSingle();
 
-    // Falls API-Name und unser Name leicht abweichen,
-    // verwenden wir den API-Namen und versuchen das Logo
-    // später manuell zu korrigieren.
     const opponentName =
-      localTeam?.name ?? opponentApiTeam.name;
+      localTeam?.name ??
+      opponentApiTeam.name;
 
     const opponentLogo =
-      localTeam?.logo_path ?? null;
+      localTeam?.logo_path ??
+      null;
 
     const status =
-      item.fixture?.status?.short ?? "NS";
+      item.fixture?.status
+        ?.short ?? "NS";
 
     const isFinished =
       status === "FT" ||
       status === "AET" ||
       status === "PEN";
 
-    const homeGoals = item.goals?.home;
-    const awayGoals = item.goals?.away;
+    const homeGoals =
+      item.goals?.home;
 
-    let fcsgScore: number | null = null;
-    let opponentScore: number | null = null;
+    const awayGoals =
+      item.goals?.away;
+
+    let fcsgScore:
+      | number
+      | null = null;
+
+    let opponentScore:
+      | number
+      | null = null;
 
     if (
       isFinished &&
@@ -385,25 +552,65 @@ export async function importMatchesForMonth(formData: FormData) {
       awayGoals !== undefined
     ) {
       if (fcsgIsHome) {
-        fcsgScore = homeGoals;
-        opponentScore = awayGoals;
+        fcsgScore =
+          homeGoals;
+
+        opponentScore =
+          awayGoals;
       } else {
-        fcsgScore = awayGoals;
-        opponentScore = homeGoals;
+        fcsgScore =
+          awayGoals;
+
+        opponentScore =
+          homeGoals;
       }
     }
 
-    const { error: insertError } = await supabase
+    const {
+      error: insertError,
+    } = await supabase
       .from("matches")
       .insert({
-        api_fixture_id: fixtureId,
-        opponent: opponentName,
-        opponent_logo: opponentLogo,
-        kickoff: item.fixture.date,
-        is_home: fcsgIsHome,
-        finished: isFinished,
-        fcsg_score: fcsgScore,
-        opponent_score: opponentScore,
+        api_fixture_id:
+          fixtureId,
+
+        opponent:
+          opponentName,
+
+        opponent_logo:
+          opponentLogo,
+
+        kickoff:
+          item.fixture.date,
+
+        is_home:
+          fcsgIsHome,
+
+        finished:
+          isFinished,
+
+        fcsg_score:
+          fcsgScore,
+
+        opponent_score:
+          opponentScore,
+
+        live_status:
+          status,
+
+        live_minute:
+          item.fixture?.status
+            ?.elapsed ?? null,
+
+        live_extra:
+          item.fixture?.status
+            ?.extra ?? null,
+
+        live_home_score:
+          homeGoals ?? null,
+
+        live_away_score:
+          awayGoals ?? null,
       });
 
     if (insertError) {
@@ -413,13 +620,13 @@ export async function importMatchesForMonth(formData: FormData) {
     }
   }
 
-  revalidatePath("/");
-  revalidatePath("/ergebnisse");
-  revalidatePath("/rangliste");
-  revalidatePath("/admin");
-  revalidatePath("/admin/abgeschlossen");
+  revalidateGamePages();
 }
 
+/*
+ * EIN SPIEL MIT API-FOOTBALL
+ * SYNCHRONISIEREN
+ */
 export async function syncMatchWithApi(formData: FormData) {
   await requireAdmin();
 
@@ -437,7 +644,6 @@ export async function syncMatchWithApi(formData: FormData) {
 
   const supabase = createAdminClient();
 
-  // Unser Match laden
   const { data: match, error: matchError } = await supabase
     .from("matches")
     .select("id, api_fixture_id, is_home")
@@ -446,7 +652,8 @@ export async function syncMatchWithApi(formData: FormData) {
 
   if (matchError || !match) {
     throw new Error(
-      matchError?.message ?? "Match konnte nicht gefunden werden."
+      matchError?.message ??
+        "Match konnte nicht gefunden werden."
     );
   }
 
@@ -456,42 +663,115 @@ export async function syncMatchWithApi(formData: FormData) {
     );
   }
 
-  // Match inkl. Events + Lineups laden
-  const response = await fetch(
-    `https://v3.football.api-sports.io/fixtures?id=${match.api_fixture_id}`,
+  const fixtureId = match.api_fixture_id;
+
+  const headers = {
+    "x-apisports-key": apiKey,
+  };
+
+  // 1. Spielstatus / Spielstand
+  const fixtureResponse = await fetch(
+    `https://v3.football.api-sports.io/fixtures?id=${fixtureId}`,
     {
-      headers: {
-        "x-apisports-key": apiKey,
-      },
+      headers,
       cache: "no-store",
     }
   );
 
-  if (!response.ok) {
-    throw new Error(
-      `API-Football Fehler: HTTP ${response.status}`
-    );
-  }
-
-  const apiData = await response.json();
+  const fixtureData = await fixtureResponse.json();
 
   if (
-    apiData.errors &&
-    Object.keys(apiData.errors).length > 0
+    fixtureData.errors &&
+    Object.keys(fixtureData.errors).length > 0
   ) {
     throw new Error(
-      `API-Football: ${JSON.stringify(apiData.errors)}`
+      `Fixture-API: ${JSON.stringify(fixtureData.errors)}`
     );
   }
 
-  const fixture = apiData.response?.[0];
+  const fixture = fixtureData.response?.[0];
 
   if (!fixture) {
     throw new Error(
-      "API-Football hat keine Daten für dieses Spiel geliefert."
+      "Keine Spieldaten von API-Football erhalten."
     );
   }
 
+  // 2. Ereignisse
+  const eventsResponse = await fetch(
+    `https://v3.football.api-sports.io/fixtures/events?fixture=${fixtureId}`,
+    {
+      headers,
+      cache: "no-store",
+    }
+  );
+
+  const eventsData = await eventsResponse.json();
+
+  if (
+    eventsData.errors &&
+    Object.keys(eventsData.errors).length > 0
+  ) {
+    throw new Error(
+      `Events-API: ${JSON.stringify(eventsData.errors)}`
+    );
+  }
+
+  const events = Array.isArray(eventsData.response)
+    ? eventsData.response
+    : [];
+
+  // 3. Aufstellungen
+  const lineupsResponse = await fetch(
+    `https://v3.football.api-sports.io/fixtures/lineups?fixture=${fixtureId}`,
+    {
+      headers,
+      cache: "no-store",
+    }
+  );
+
+  const lineupsData = await lineupsResponse.json();
+
+  if (
+    lineupsData.errors &&
+    Object.keys(lineupsData.errors).length > 0
+  ) {
+    throw new Error(
+      `Lineups-API: ${JSON.stringify(lineupsData.errors)}`
+    );
+  }
+
+  const lineups = Array.isArray(lineupsData.response)
+    ? lineupsData.response
+    : [];
+
+  // 4. Statistiken
+  const statisticsResponse = await fetch(
+    `https://v3.football.api-sports.io/fixtures/statistics?fixture=${fixtureId}`,
+    {
+      headers,
+      cache: "no-store",
+    }
+  );
+
+  const statisticsData = await statisticsResponse.json();
+
+  if (
+    statisticsData.errors &&
+    Object.keys(statisticsData.errors).length > 0
+  ) {
+    throw new Error(
+      `Statistics-API: ${JSON.stringify(
+        statisticsData.errors
+      )}`
+    );
+  }
+
+  const statistics = Array.isArray(statisticsData.response)
+    ? statisticsData.response
+    : [];
+
+  // Status
   const status =
     fixture.fixture?.status?.short ?? null;
 
@@ -507,29 +787,9 @@ export async function syncMatchWithApi(formData: FormData) {
   const awayScore =
     fixture.goals?.away ?? null;
 
-  // Events enthalten u.a.:
-  // Tore, Assists, Karten, Wechsel und VAR
-  const events =
-    Array.isArray(fixture.events)
-      ? fixture.events
-      : [];
-
-  // Lineups enthalten u.a.:
-  // Formation, Trainer, Startelf und Ersatzspieler
-  const lineups =
-    Array.isArray(fixture.lineups)
-      ? fixture.lineups
-      : [];
-
-  const finishedStatuses = [
-    "FT",
-    "AET",
-    "PEN",
-  ];
-
   const isFinished =
     status !== null &&
-    finishedStatuses.includes(status);
+    ["FT", "AET", "PEN"].includes(status);
 
   const updateData: {
     live_status: string | null;
@@ -539,6 +799,7 @@ export async function syncMatchWithApi(formData: FormData) {
     live_away_score: number | null;
     live_events: unknown[];
     live_lineups: unknown[];
+    live_statistics: unknown[];
     finished?: boolean;
     fcsg_score?: number | null;
     opponent_score?: number | null;
@@ -550,10 +811,10 @@ export async function syncMatchWithApi(formData: FormData) {
     live_away_score: awayScore,
     live_events: events,
     live_lineups: lineups,
+    live_statistics: statistics,
   };
 
-  // Wenn Spiel beendet:
-  // Endresultat automatisch übernehmen
+  // Bei Spielende automatisch abschliessen
   if (
     isFinished &&
     homeScore !== null &&
@@ -569,6 +830,7 @@ export async function syncMatchWithApi(formData: FormData) {
       updateData.opponent_score = homeScore;
     }
   }
+
   const { error: updateError } = await supabase
     .from("matches")
     .update(updateData)

@@ -57,15 +57,14 @@ async function ResultsList() {
   opponentScore={match.opponent_score}
   opponentName={match.opponent}
   opponentLogo={match.opponent_logo}
-
   liveStatus={match.live_status}
   liveMinute={match.live_minute}
   liveExtra={match.live_extra}
   liveHomeScore={match.live_home_score}
   liveAwayScore={match.live_away_score}
-
   liveEvents={match.live_events}
   liveLineups={match.live_lineups}
+  liveStatistics={match.live_statistics}
 />
 
           <MatchTips

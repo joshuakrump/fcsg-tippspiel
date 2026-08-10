@@ -86,9 +86,30 @@ async function MatchList() {
       ? upcomingMatches[0].kickoff
       : null;
 
+  const now = new Date();
+
+const hasLiveMatch = upcomingMatches.some((match) => {
+  const kickoff = new Date(match.kickoff);
+
+  const differenceMs =
+    now.getTime() - kickoff.getTime();
+
+  const threeHoursMs =
+    3 * 60 * 60 * 1000;
+
+  return (
+    differenceMs >= 0 &&
+    differenceMs <= threeHoursMs &&
+    !match.finished
+  );
+});
+
   return (
     <div className="space-y-10">
-      <AutoRefresh nextKickoff={nextKickoff} />
+      <AutoRefresh
+  nextKickoff={nextKickoff}
+  hasLiveMatch={hasLiveMatch}
+/>
 
       {/* Aktuelle Tipps */}
       <section>
@@ -133,6 +154,7 @@ async function MatchList() {
                   liveAwayScore={match.live_away_score}
                   liveEvents={match.live_events}
                   liveLineups={match.live_lineups}
+                  liveStatistics={match.live_statistics}
                 />
 
                 <MatchTips
@@ -207,6 +229,7 @@ async function MatchList() {
               liveAwayScore={lastFinishedMatch.live_away_score}
               liveEvents={lastFinishedMatch.live_events}
               liveLineups={lastFinishedMatch.live_lineups}
+              liveStatistics={lastFinishedMatch.live_statistics}
             />
 
             <MatchTips

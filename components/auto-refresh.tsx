@@ -4,43 +4,53 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 type AutoRefreshProps = {
-  nextKickoff?: string | null;
+  nextKickoff: string | null;
+  hasLiveMatch?: boolean;
 };
 
 export function AutoRefresh({
   nextKickoff,
+  hasLiveMatch = false,
 }: AutoRefreshProps) {
   const router = useRouter();
 
   useEffect(() => {
-    // Alle 30 Sekunden Daten neu laden.
-    // So werden z.B. eingetragene Endresultate automatisch sichtbar.
-    const interval = setInterval(() => {
-      router.refresh();
-    }, 30000);
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
 
-    // Zusätzlich möglichst genau beim nächsten Anpfiff aktualisieren.
-    let kickoffTimer: ReturnType<typeof setTimeout> | undefined;
+    // Wenn ein Match läuft:
+    // jede Minute Serverdaten neu holen
+    if (hasLiveMatch) {
+      intervalId = setInterval(() => {
+        router.refresh();
+      }, 60_000);
+    }
 
-    if (nextKickoff) {
-      const millisecondsUntilKickoff =
-        new Date(nextKickoff).getTime() - Date.now();
+    // Wenn noch kein Match läuft:
+    // beim nächsten Anpfiff einmal refreshen
+    if (!hasLiveMatch && nextKickoff) {
+      const kickoffTime = new Date(nextKickoff).getTime();
+      const now = Date.now();
 
-      if (millisecondsUntilKickoff > 0) {
-        kickoffTimer = setTimeout(() => {
+      const delay = kickoffTime - now;
+
+      if (delay > 0) {
+        timeoutId = setTimeout(() => {
           router.refresh();
-        }, millisecondsUntilKickoff + 1000);
+        }, delay + 1000);
       }
     }
 
     return () => {
-      clearInterval(interval);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
 
-      if (kickoffTimer) {
-        clearTimeout(kickoffTimer);
+      if (intervalId) {
+        clearInterval(intervalId);
       }
     };
-  }, [nextKickoff, router]);
+  }, [nextKickoff, hasLiveMatch, router]);
 
   return null;
 }

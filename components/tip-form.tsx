@@ -13,10 +13,16 @@ type TipFormProps = {
   opponentScore: number | null;
   opponentName: string;
   opponentLogo: string | null;
+
+  liveStatus: string | null;
+  liveMinute: number | null;
+  liveExtra: number | null;
+  liveHomeScore: number | null;
+  liveAwayScore: number | null;
+
   liveEvents: unknown[] | null;
   liveLineups: unknown[] | null;
 };
-
 export function TipForm({
   matchId,
   kickoff,
@@ -26,9 +32,15 @@ export function TipForm({
   opponentScore,
   opponentName,
   opponentLogo,
+  liveStatus,
+  liveMinute,
+  liveExtra,
+  liveHomeScore,
+  liveAwayScore,
   liveEvents,
   liveLineups,
 }: TipFormProps) {
+
   const [fcsgTip, setFcsgTip] = useState("");
   const [opponentTip, setOpponentTip] = useState("");
 

@@ -48,18 +48,25 @@ async function ResultsList() {
               : `${match.opponent} – FC St. Gallen`}
           </h2>
 
-          <TipForm
-            matchId={match.id}
-            kickoff={match.kickoff}
-            isHome={match.is_home}
-            finished={match.finished}
-            fcsgScore={match.fcsg_score}
-            opponentScore={match.opponent_score}
-            opponentName={match.opponent}
-            opponentLogo={match.opponent_logo}
-            liveEvents={match.live_events}
-            liveLineups={match.live_lineups}
-          />
+         <TipForm
+  matchId={match.id}
+  kickoff={match.kickoff}
+  isHome={match.is_home}
+  finished={match.finished}
+  fcsgScore={match.fcsg_score}
+  opponentScore={match.opponent_score}
+  opponentName={match.opponent}
+  opponentLogo={match.opponent_logo}
+
+  liveStatus={match.live_status}
+  liveMinute={match.live_minute}
+  liveExtra={match.live_extra}
+  liveHomeScore={match.live_home_score}
+  liveAwayScore={match.live_away_score}
+
+  liveEvents={match.live_events}
+  liveLineups={match.live_lineups}
+/>
 
           <MatchTips
             matchId={match.id}

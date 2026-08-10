@@ -68,23 +68,19 @@ async function MatchList() {
     );
   }
 
-  // Nur die nächsten 2 noch nicht abgeschlossenen Spiele
   const upcomingMatches =
     matches
       ?.filter((match) => !match.finished)
       .slice(0, 2) ?? [];
 
-  // Alle abgeschlossenen Spiele
   const finishedMatches =
     matches?.filter((match) => match.finished) ?? [];
 
-  // Nur das zuletzt abgeschlossene Spiel
   const lastFinishedMatch =
     finishedMatches.length > 0
       ? finishedMatches[finishedMatches.length - 1]
       : null;
 
-  // Nächster Anpfiff für Auto-Refresh
   const nextKickoff =
     upcomingMatches.length > 0
       ? upcomingMatches[0].kickoff
@@ -130,6 +126,11 @@ async function MatchList() {
                   opponentScore={match.opponent_score}
                   opponentName={match.opponent}
                   opponentLogo={match.opponent_logo}
+                  liveStatus={match.live_status}
+                  liveMinute={match.live_minute}
+                  liveExtra={match.live_extra}
+                  liveHomeScore={match.live_home_score}
+                  liveAwayScore={match.live_away_score}
                   liveEvents={match.live_events}
                   liveLineups={match.live_lineups}
                 />
@@ -199,6 +200,11 @@ async function MatchList() {
               opponentScore={lastFinishedMatch.opponent_score}
               opponentName={lastFinishedMatch.opponent}
               opponentLogo={lastFinishedMatch.opponent_logo}
+              liveStatus={lastFinishedMatch.live_status}
+              liveMinute={lastFinishedMatch.live_minute}
+              liveExtra={lastFinishedMatch.live_extra}
+              liveHomeScore={lastFinishedMatch.live_home_score}
+              liveAwayScore={lastFinishedMatch.live_away_score}
               liveEvents={lastFinishedMatch.live_events}
               liveLineups={lastFinishedMatch.live_lineups}
             />

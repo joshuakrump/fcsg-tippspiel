@@ -93,7 +93,7 @@ export default function RanglistePage() {
   return (
     <main className="min-h-screen bg-green-950 text-white p-6 md:p-8">
       <div className="max-w-2xl mx-auto">
-        <AutoRefresh />
+        <AutoRefresh nextKickoff={null} />
 
         <AppHeader subtitle="Saisonrangliste" />
 

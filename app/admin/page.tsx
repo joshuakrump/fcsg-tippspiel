@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { formatInTimeZone } from "date-fns-tz";
 
 import { isAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/admin-client";
@@ -308,9 +309,11 @@ async function AdminContent() {
                     <input
                       name="kickoff"
                       type="datetime-local"
-                      defaultValue={new Date(match.kickoff)
-                        .toISOString()
-                        .slice(0, 16)}
+                      defaultValue={formatInTimeZone(
+                        new Date(match.kickoff),
+                        "Europe/Zurich",
+                        "yyyy-MM-dd'T'HH:mm"
+                      )}
                       required
                       className="w-full border rounded-lg p-2"
                     />

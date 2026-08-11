@@ -57,17 +57,12 @@ function getEventMinute(event: MatchEvent) {
 
   const extra = event.time?.extra;
 
-  return extra
-    ? `${elapsed}+${extra}'`
-    : `${elapsed}'`;
+  return extra ? `${elapsed}+${extra}'` : `${elapsed}'`;
 }
 
 function getEventIcon(event: MatchEvent) {
-  const type =
-    event.type?.toLowerCase() ?? "";
-
-  const detail =
-    event.detail?.toLowerCase() ?? "";
+  const type = event.type?.toLowerCase() ?? "";
+  const detail = event.detail?.toLowerCase() ?? "";
 
   if (type === "goal") {
     return "⚽";
@@ -210,9 +205,7 @@ export function TipForm({
   liveLineups,
   liveStatistics,
 }: TipFormProps) {
-  const [fcsgTip, setFcsgTip] =
-    useState("");
-
+  const [fcsgTip, setFcsgTip] = useState("");
   const [opponentTip, setOpponentTip] =
     useState("");
 
@@ -229,11 +222,8 @@ export function TipForm({
   const [points, setPoints] =
     useState<number | null>(null);
 
-  const [message, setMessage] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   /*
    * Lokale Live-Minute.
@@ -243,9 +233,7 @@ export function TipForm({
   const [
     displayLiveMinute,
     setDisplayLiveMinute,
-  ] = useState<number | null>(
-    liveMinute
-  );
+  ] = useState<number | null>(liveMinute);
 
   const supabase = createClient();
 
@@ -259,8 +247,7 @@ export function TipForm({
     async function loadTip() {
       const {
         data: { user },
-      } =
-        await supabase.auth.getUser();
+      } = await supabase.auth.getUser();
 
       if (!user) return;
 
@@ -286,9 +273,7 @@ export function TipForm({
         setOpponentTip(opponentValue);
 
         setSavedFcsgTip(fcsgValue);
-        setSavedOpponentTip(
-          opponentValue
-        );
+        setSavedOpponentTip(opponentValue);
 
         setPoints(data.points ?? 0);
       }
@@ -301,21 +286,8 @@ export function TipForm({
    * LIVE-MINUTE LOKAL WEITERZÄHLEN
    */
   useEffect(() => {
-    /*
-     * Bei jedem neuen API-Wert
-     * wieder exakt synchronisieren.
-     */
-    setDisplayLiveMinute(
-      liveMinute
-    );
+    setDisplayLiveMinute(liveMinute);
 
-    /*
-     * Keine lokale Uhr bei:
-     * - beendet
-     * - noch nicht gestartet
-     * - Halbzeit
-     * - keiner verfügbaren Minute
-     */
     if (
       finished ||
       liveStatus === "NS" ||
@@ -325,28 +297,19 @@ export function TipForm({
       return;
     }
 
-    const interval =
-      setInterval(() => {
-        setDisplayLiveMinute(
-          (current) => {
-            if (current === null) {
-              return liveMinute;
-            }
+    const interval = setInterval(() => {
+      setDisplayLiveMinute((current) => {
+        if (current === null) {
+          return liveMinute;
+        }
 
-            /*
-             * Ab Minute 90 zählen wir
-             * nicht künstlich weiter.
-             * Nachspielzeit liefert
-             * API-Football über liveExtra.
-             */
-            if (current >= 90) {
-              return current;
-            }
+        if (current >= 90) {
+          return current;
+        }
 
-            return current + 1;
-          }
-        );
-      }, 60_000);
+        return current + 1;
+      });
+    }, 60_000);
 
     return () => {
       clearInterval(interval);
@@ -366,8 +329,7 @@ export function TipForm({
 
     const {
       data: { user },
-    } =
-      await supabase.auth.getUser();
+    } = await supabase.auth.getUser();
 
     if (!user) {
       setMessage(
@@ -396,26 +358,21 @@ export function TipForm({
       return;
     }
 
-    const { error } =
-      await supabase
-        .from("tips")
-        .upsert(
-          {
-            user_id: user.id,
-
-            match_id: matchId,
-
-            fcsg_tip:
-              Number(fcsgTip),
-
-            opponent_tip:
-              Number(opponentTip),
-          },
-          {
-            onConflict:
-              "user_id,match_id",
-          }
-        );
+    const { error } = await supabase
+      .from("tips")
+      .upsert(
+        {
+          user_id: user.id,
+          match_id: matchId,
+          fcsg_tip: Number(fcsgTip),
+          opponent_tip:
+            Number(opponentTip),
+        },
+        {
+          onConflict:
+            "user_id,match_id",
+        }
+      );
 
     if (error) {
       setMessage(
@@ -423,9 +380,7 @@ export function TipForm({
       );
     } else {
       setSavedFcsgTip(fcsgTip);
-      setSavedOpponentTip(
-        opponentTip
-      );
+      setSavedOpponentTip(opponentTip);
       setMessage("");
     }
 
@@ -524,17 +479,15 @@ export function TipForm({
    * Tore und Karten.
    */
   const keyEvents =
-    allEvents.filter(
-      (event) => {
-        const type =
-          event.type?.toLowerCase();
+    allEvents.filter((event) => {
+      const type =
+        event.type?.toLowerCase();
 
-        return (
-          type === "goal" ||
-          type === "card"
-        );
-      }
-    );
+      return (
+        type === "goal" ||
+        type === "card"
+      );
+    });
 
   const fcsgKeyEvents =
     keyEvents.filter(
@@ -547,8 +500,7 @@ export function TipForm({
     keyEvents.filter(
       (event) =>
         event.team?.id !== null &&
-        event.team?.id !==
-          undefined &&
+        event.team?.id !== undefined &&
         Number(event.team.id) !==
           FCSG_TEAM_ID
     );
@@ -618,7 +570,6 @@ export function TipForm({
             !finished && (
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
               </span>
             )}
@@ -636,15 +587,16 @@ export function TipForm({
             {leftTeamName}
           </p>
 
-          <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4">
+          {/* GRÖSSERES LOGO */}
+          <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center mb-4">
             {leftTeamLogo ? (
               <img
                 src={leftTeamLogo}
                 alt={`${leftTeamName} Logo`}
-                className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+                className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
               />
             ) : (
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-xl flex items-center justify-center text-xs text-gray-400">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-xl flex items-center justify-center text-xs text-gray-400">
                 Kein Logo
               </div>
             )}
@@ -655,9 +607,7 @@ export function TipForm({
               <input
                 type="number"
                 min="0"
-                value={
-                  displayedTipLeft
-                }
+                value={displayedTipLeft}
                 onChange={(e) =>
                   isHome
                     ? setFcsgTip(
@@ -668,17 +618,24 @@ export function TipForm({
                       )
                 }
                 className="
-                  w-16 h-12
-                  sm:w-20 sm:h-14
+                  w-16 h-14
+                  sm:w-20 sm:h-16
                   border-2
                   border-gray-200
-                  rounded-xl
+                  bg-gray-50
+                  rounded-2xl
                   text-center
-                  text-xl
-                  sm:text-2xl
+                  text-2xl
+                  sm:text-3xl
                   font-black
+                  shadow-inner
+                  transition
+                  hover:border-gray-300
                   focus:outline-none
                   focus:border-green-700
+                  focus:bg-white
+                  focus:ring-4
+                  focus:ring-green-100
                 "
               />
             )}
@@ -686,20 +643,16 @@ export function TipForm({
           {(gameStarted ||
             finished) && (
             <TeamKeyEvents
-              events={
-                leftKeyEvents
-              }
+              events={leftKeyEvents}
             />
           )}
         </div>
 
         {/* MITTE */}
-        <div className="flex flex-col items-center justify-center min-w-14 sm:min-w-20 pt-16">
+        <div className="flex flex-col items-center justify-center min-w-16 sm:min-w-24 pt-16">
           {finished &&
-          displayedScoreLeft !==
-            null &&
-          displayedScoreRight !==
-            null ? (
+          displayedScoreLeft !== null &&
+          displayedScoreRight !== null ? (
             <>
               <span className="text-[10px] sm:text-xs text-gray-500 font-semibold mb-1">
                 ENDSTAND
@@ -726,9 +679,25 @@ export function TipForm({
               </span>
             </>
           ) : (
-            <span className="text-lg sm:text-xl font-black text-gray-400">
-              VS
-            </span>
+            /* NEUES VS-BADGE */
+            <div
+              className="
+                flex
+                items-center
+                justify-center
+                w-12 h-12
+                sm:w-14 sm:h-14
+                rounded-full
+                bg-gray-100
+                border
+                border-gray-200
+                shadow-inner
+              "
+            >
+              <span className="text-sm sm:text-base font-black text-gray-500">
+                VS
+              </span>
+            </div>
           )}
         </div>
 
@@ -738,15 +707,16 @@ export function TipForm({
             {rightTeamName}
           </p>
 
-          <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mb-4">
+          {/* GRÖSSERES LOGO */}
+          <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center mb-4">
             {rightTeamLogo ? (
               <img
                 src={rightTeamLogo}
                 alt={`${rightTeamName} Logo`}
-                className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+                className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
               />
             ) : (
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-xl flex items-center justify-center text-xs text-gray-400">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-xl flex items-center justify-center text-xs text-gray-400">
                 Kein Logo
               </div>
             )}
@@ -757,9 +727,7 @@ export function TipForm({
               <input
                 type="number"
                 min="0"
-                value={
-                  displayedTipRight
-                }
+                value={displayedTipRight}
                 onChange={(e) =>
                   isHome
                     ? setOpponentTip(
@@ -770,17 +738,24 @@ export function TipForm({
                       )
                 }
                 className="
-                  w-16 h-12
-                  sm:w-20 sm:h-14
+                  w-16 h-14
+                  sm:w-20 sm:h-16
                   border-2
                   border-gray-200
-                  rounded-xl
+                  bg-gray-50
+                  rounded-2xl
                   text-center
-                  text-xl
-                  sm:text-2xl
+                  text-2xl
+                  sm:text-3xl
                   font-black
+                  shadow-inner
+                  transition
+                  hover:border-gray-300
                   focus:outline-none
                   focus:border-green-700
+                  focus:bg-white
+                  focus:ring-4
+                  focus:ring-green-100
                 "
               />
             )}
@@ -788,9 +763,7 @@ export function TipForm({
           {(gameStarted ||
             finished) && (
             <TeamKeyEvents
-              events={
-                rightKeyEvents
-              }
+              events={rightKeyEvents}
             />
           )}
         </div>
@@ -826,10 +799,8 @@ export function TipForm({
       {/* GESPEICHERTER TIPP */}
       {!finished &&
         !gameStarted &&
-        displayedSavedLeft !==
-          null &&
-        displayedSavedRight !==
-          null && (
+        displayedSavedLeft !== null &&
+        displayedSavedRight !== null && (
           <div className="mt-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-green-800 font-bold text-center">
             ✓ Gespeichert:{" "}
             {displayedSavedLeft}
@@ -846,8 +817,7 @@ export function TipForm({
               Tippabgabe geschlossen
             </p>
 
-            {displayedSavedLeft !==
-              null &&
+            {displayedSavedLeft !== null &&
               displayedSavedRight !==
                 null && (
                 <p className="text-gray-700 mt-1 text-sm">
@@ -864,10 +834,8 @@ export function TipForm({
 
       {/* BEENDETES SPIEL */}
       {finished &&
-        displayedSavedLeft !==
-          null &&
-        displayedSavedRight !==
-          null && (
+        displayedSavedLeft !== null &&
+        displayedSavedRight !== null && (
           <div className="mt-6 bg-gray-50 border border-gray-200 rounded-xl p-4">
             <div className="flex items-center justify-between">
               <span className="text-gray-600">
@@ -904,19 +872,13 @@ export function TipForm({
 
       {/* MATCHDETAILS */}
       <MatchDetails
-        events={
-          liveEvents as any[]
-        }
-        lineups={
-          liveLineups as any[]
-        }
+        events={liveEvents as any[]}
+        lineups={liveLineups as any[]}
         statistics={
           liveStatistics as any[]
         }
         isHome={isHome}
-        opponentName={
-          opponentName
-        }
+        opponentName={opponentName}
       />
     </div>
   );

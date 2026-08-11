@@ -9,6 +9,17 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
+function formatKickoff(kickoff: string) {
+  return new Date(kickoff).toLocaleString("de-CH", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 async function UserHeader() {
   const supabase = await createClient();
 
@@ -27,21 +38,58 @@ async function UserHeader() {
     .single();
 
   return (
-    <div className="flex items-center justify-between mb-8">
-      <div>
-        <p className="text-green-200 text-sm">
-          Eingeloggt als
-        </p>
+    <div
+      className="
+        flex flex-col sm:flex-row
+        sm:items-center sm:justify-between
+        gap-4
+        mb-10
+        p-4 sm:p-5
+        rounded-2xl
+        border border-green-800/70
+        bg-green-900/40
+        backdrop-blur-sm
+      "
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className="
+            flex items-center justify-center
+            w-11 h-11
+            rounded-full
+            bg-green-700
+            text-lg font-black
+            shadow-inner
+          "
+        >
+          {(profile?.username ?? "S").charAt(0).toUpperCase()}
+        </div>
 
-        <p className="text-xl font-bold">
-          {profile?.username ?? "Spieler"}
-        </p>
+        <div>
+          <p className="text-green-300 text-xs font-medium">
+            Eingeloggt als
+          </p>
+
+          <p className="text-lg font-bold leading-tight">
+            {profile?.username ?? "Spieler"}
+          </p>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <a
           href="/admin-login"
-          className="bg-green-800 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold"
+          className="
+            inline-flex items-center justify-center
+            bg-green-700
+            hover:bg-green-600
+            active:scale-95
+            text-white
+            px-4 py-2.5
+            rounded-xl
+            text-sm font-bold
+            transition
+          "
         >
           Admin
         </a>
@@ -62,7 +110,7 @@ async function MatchList() {
 
   if (error) {
     return (
-      <div className="bg-red-900 p-4 rounded-lg">
+      <div className="bg-red-900/80 border border-red-700 p-5 rounded-2xl">
         Fehler beim Laden der Spiele: {error.message}
       </div>
     );
@@ -88,55 +136,120 @@ async function MatchList() {
 
   const now = new Date();
 
-const hasLiveMatch = upcomingMatches.some((match) => {
-  const kickoff = new Date(match.kickoff);
+  const hasLiveMatch = upcomingMatches.some((match) => {
+    const kickoff = new Date(match.kickoff);
 
-  const differenceMs =
-    now.getTime() - kickoff.getTime();
+    const differenceMs =
+      now.getTime() - kickoff.getTime();
 
-  const threeHoursMs =
-    3 * 60 * 60 * 1000;
+    const threeHoursMs =
+      3 * 60 * 60 * 1000;
+
+    return (
+      differenceMs >= 0 &&
+      differenceMs <= threeHoursMs &&
+      !match.finished
+    );
+  });
 
   return (
-    differenceMs >= 0 &&
-    differenceMs <= threeHoursMs &&
-    !match.finished
-  );
-});
-
-  return (
-    <div className="space-y-10">
+    <div className="space-y-12">
       <AutoRefresh
-  nextKickoff={nextKickoff}
-  hasLiveMatch={hasLiveMatch}
-/>
+        nextKickoff={nextKickoff}
+        hasLiveMatch={hasLiveMatch}
+      />
 
       {/* Aktuelle Tipps */}
       <section>
-        <h2 className="text-2xl font-bold text-white mb-4">
-          Aktuelle Tipps
-        </h2>
+        <div className="mb-5">
+          <h2 className="text-2xl sm:text-3xl font-black text-white">
+            Aktuelle Tipps
+          </h2>
+
+          <p className="text-green-300 text-sm mt-1">
+            Tippe die nächsten Spiele des FC St. Gallen.
+          </p>
+        </div>
 
         {upcomingMatches.length === 0 ? (
-          <div className="bg-white text-black rounded-xl p-5 shadow-xl">
-            Aktuell stehen keine Spiele zur Tippabgabe an.
+          <div
+            className="
+              bg-white
+              text-gray-900
+              rounded-2xl
+              p-6
+              shadow-xl
+            "
+          >
+            <p className="font-semibold">
+              Aktuell stehen keine Spiele zur Tippabgabe an.
+            </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {upcomingMatches.map((match) => (
-              <div
+          <div className="space-y-6">
+            {upcomingMatches.map((match, index) => (
+              <article
                 key={match.id}
-                className="bg-white text-black rounded-2xl p-5 shadow-xl"
+                className={`
+                  bg-white
+                  text-black
+                  rounded-3xl
+                  p-5 sm:p-7
+                  shadow-2xl
+                  border
+                  transition
+                  ${
+                    index === 0
+                      ? "border-green-400/80"
+                      : "border-gray-200"
+                  }
+                `}
               >
-                <p className="text-sm text-gray-500">
-                  {new Date(match.kickoff).toLocaleString("de-CH")}
-                </p>
+                {/* Kopfbereich Match */}
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
+                  <div>
+                    <div
+                      className="
+                        inline-flex
+                        items-center
+                        bg-gray-100
+                        text-gray-500
+                        rounded-full
+                        px-3 py-1
+                        text-xs
+                        font-semibold
+                        mb-3
+                      "
+                    >
+                      {formatKickoff(match.kickoff)}
+                    </div>
 
-                <h3 className="text-xl font-bold mt-2">
-                  {match.is_home
-                    ? `FC St. Gallen – ${match.opponent}`
-                    : `${match.opponent} – FC St. Gallen`}
-                </h3>
+                    <h3 className="text-xl sm:text-2xl font-black tracking-tight">
+                      {match.is_home
+                        ? `FC St. Gallen – ${match.opponent}`
+                        : `${match.opponent} – FC St. Gallen`}
+                    </h3>
+                  </div>
+
+                  {index === 0 && (
+                    <span
+                      className="
+                        inline-flex
+                        self-start
+                        items-center
+                        rounded-full
+                        bg-green-100
+                        text-green-800
+                        px-3 py-1.5
+                        text-xs
+                        font-extrabold
+                        whitespace-nowrap
+                      "
+                    >
+                      Nächstes Spiel
+                    </span>
+                  )}
+                </div>
 
                 <TipForm
                   matchId={match.id}
@@ -163,7 +276,7 @@ const hasLiveMatch = upcomingMatches.some((match) => {
                   isHome={match.is_home}
                   finished={match.finished}
                 />
-              </div>
+              </article>
             ))}
           </div>
         )}
@@ -171,47 +284,97 @@ const hasLiveMatch = upcomingMatches.some((match) => {
 
       {/* Letztes Ergebnis */}
       <section>
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <h2 className="text-2xl font-bold text-white">
-            Letztes Ergebnis
-          </h2>
+        <div
+          className="
+            flex flex-col
+            sm:flex-row
+            sm:items-end
+            sm:justify-between
+            gap-4
+            mb-5
+          "
+        >
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">
+              Letztes Ergebnis
+            </h2>
+
+            <p className="text-green-300 text-sm mt-1">
+              Das zuletzt abgeschlossene Spiel.
+            </p>
+          </div>
 
           <a
             href="/ergebnisse"
             className="
-              inline-flex items-center justify-center
-              bg-white text-green-950
+              inline-flex
+              self-start sm:self-auto
+              items-center
+              justify-center
+              bg-white
+              text-green-950
               px-4 py-2.5
               rounded-xl
-              text-sm font-bold
-              shadow-md
+              text-sm
+              font-bold
+              shadow-lg
               hover:bg-green-100
               active:scale-95
               transition
               whitespace-nowrap
             "
           >
-            Alle Ergebnisse →
+            Alle Ergebnisse
+            <span className="ml-2">→</span>
           </a>
         </div>
 
         {!lastFinishedMatch ? (
-          <div className="bg-white text-black rounded-xl p-5 shadow-xl">
+          <div
+            className="
+              bg-white
+              text-gray-900
+              rounded-2xl
+              p-6
+              shadow-xl
+            "
+          >
             Noch kein abgeschlossenes Spiel vorhanden.
           </div>
         ) : (
-          <div className="bg-white text-black rounded-2xl p-5 shadow-xl">
-            <p className="text-sm text-gray-500">
-              {new Date(
-                lastFinishedMatch.kickoff
-              ).toLocaleString("de-CH")}
-            </p>
+          <article
+            className="
+              bg-white
+              text-black
+              rounded-3xl
+              p-5 sm:p-7
+              shadow-2xl
+              border border-gray-200
+            "
+          >
+            <div className="mb-1">
+              <div
+                className="
+                  inline-flex
+                  items-center
+                  bg-gray-100
+                  text-gray-500
+                  rounded-full
+                  px-3 py-1
+                  text-xs
+                  font-semibold
+                  mb-3
+                "
+              >
+                {formatKickoff(lastFinishedMatch.kickoff)}
+              </div>
 
-            <h3 className="text-xl font-bold mt-2">
-              {lastFinishedMatch.is_home
-                ? `FC St. Gallen – ${lastFinishedMatch.opponent}`
-                : `${lastFinishedMatch.opponent} – FC St. Gallen`}
-            </h3>
+              <h3 className="text-xl sm:text-2xl font-black tracking-tight">
+                {lastFinishedMatch.is_home
+                  ? `FC St. Gallen – ${lastFinishedMatch.opponent}`
+                  : `${lastFinishedMatch.opponent} – FC St. Gallen`}
+              </h3>
+            </div>
 
             <TipForm
               matchId={lastFinishedMatch.id}
@@ -238,7 +401,7 @@ const hasLiveMatch = upcomingMatches.some((match) => {
               isHome={lastFinishedMatch.is_home}
               finished={lastFinishedMatch.finished}
             />
-          </div>
+          </article>
         )}
       </section>
     </div>
@@ -271,9 +434,65 @@ async function ProtectedHome() {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-green-950 text-white p-6 md:p-8">
-      <div className="max-w-2xl mx-auto">
-        <Suspense fallback={<p>Tippspiel wird geladen...</p>}>
+    <main
+      className="
+        relative
+        min-h-screen
+        overflow-hidden
+        bg-green-950
+        text-white
+        px-4 py-6
+        sm:px-6 sm:py-8
+        md:px-8
+      "
+    >
+
+{/* Linker Bär */}
+<img
+  src="/images/stgallen-baer.png"
+  alt=""
+  aria-hidden="true"
+  className="
+    pointer-events-none
+    select-none
+    absolute
+    left-[-20px]
+    top-[260px]
+    hidden
+    xl:block
+    w-[620px]
+    opacity-[0.2]
+    scale-x-[-1]
+  "
+/>
+
+{/* Rechter Bär */}
+<img
+  src="/images/stgallen-baer.png"
+  alt=""
+  aria-hidden="true"
+  className="
+    pointer-events-none
+    select-none
+    absolute
+    right-[-20px]
+    top-[260px]
+    hidden
+    xl:block
+    w-[620px]
+    opacity-[0.2]
+  "
+/>
+
+      {/* Inhalt der Webseite */}
+      <div className="relative z-10 w-full max-w-4xl mx-auto">
+        <Suspense
+          fallback={
+            <div className="py-20 text-center text-green-200">
+              Tippspiel wird geladen...
+            </div>
+          }
+        >
           <ProtectedHome />
         </Suspense>
       </div>

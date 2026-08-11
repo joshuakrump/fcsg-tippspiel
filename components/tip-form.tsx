@@ -82,13 +82,6 @@ function getEventIcon(event: MatchEvent) {
   return "";
 }
 
-/*
- * TORE + KARTEN AUF DER HAUPTKARTE
- *
- * Mobile:
- * kompakte Darstellung, damit beide Teams
- * weiterhin nebeneinander bleiben können.
- */
 function TeamKeyEvents({
   events,
 }: {
@@ -121,7 +114,6 @@ function TeamKeyEvents({
               items-start
             "
           >
-            {/* Minute */}
             <span
               className="
                 text-[11px]
@@ -134,7 +126,6 @@ function TeamKeyEvents({
               {getEventMinute(event)}
             </span>
 
-            {/* Icon */}
             <span
               className="
                 text-xs
@@ -145,7 +136,6 @@ function TeamKeyEvents({
               {getEventIcon(event)}
             </span>
 
-            {/* Spieler */}
             <div className="min-w-0">
               <p
                 className="
@@ -156,8 +146,7 @@ function TeamKeyEvents({
                   break-words
                 "
               >
-                {event.player?.name ??
-                  "Unbekannter Spieler"}
+                {event.player?.name ?? "Unbekannter Spieler"}
               </p>
 
               {event.type?.toLowerCase() === "goal" &&
@@ -206,18 +195,13 @@ export function TipForm({
   liveStatistics,
 }: TipFormProps) {
   const [fcsgTip, setFcsgTip] = useState("");
-  const [opponentTip, setOpponentTip] =
-    useState("");
+  const [opponentTip, setOpponentTip] = useState("");
 
-  const [
-    savedFcsgTip,
-    setSavedFcsgTip,
-  ] = useState<string | null>(null);
+  const [savedFcsgTip, setSavedFcsgTip] =
+    useState<string | null>(null);
 
-  const [
-    savedOpponentTip,
-    setSavedOpponentTip,
-  ] = useState<string | null>(null);
+  const [savedOpponentTip, setSavedOpponentTip] =
+    useState<string | null>(null);
 
   const [points, setPoints] =
     useState<number | null>(null);
@@ -225,24 +209,17 @@ export function TipForm({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /*
-   * Lokale Live-Minute.
-   * Sie wird zwischen den Server-Refreshes
-   * auf dem Gerät weitergezählt.
-   */
-  const [
-    displayLiveMinute,
-    setDisplayLiveMinute,
-  ] = useState<number | null>(liveMinute);
+  const [showMatchDetails, setShowMatchDetails] =
+    useState(false);
+
+  const [displayLiveMinute, setDisplayLiveMinute] =
+    useState<number | null>(liveMinute);
 
   const supabase = createClient();
 
   const gameStarted =
     new Date() >= new Date(kickoff);
 
-  /*
-   * EIGENEN TIPP LADEN
-   */
   useEffect(() => {
     async function loadTip() {
       const {
@@ -253,21 +230,14 @@ export function TipForm({
 
       const { data } = await supabase
         .from("tips")
-        .select(
-          "fcsg_tip, opponent_tip, points"
-        )
+        .select("fcsg_tip, opponent_tip, points")
         .eq("user_id", user.id)
         .eq("match_id", matchId)
         .maybeSingle();
 
       if (data) {
-        const fcsgValue = String(
-          data.fcsg_tip
-        );
-
-        const opponentValue = String(
-          data.opponent_tip
-        );
+        const fcsgValue = String(data.fcsg_tip);
+        const opponentValue = String(data.opponent_tip);
 
         setFcsgTip(fcsgValue);
         setOpponentTip(opponentValue);
@@ -282,9 +252,6 @@ export function TipForm({
     loadTip();
   }, [matchId]);
 
-  /*
-   * LIVE-MINUTE LOKAL WEITERZÄHLEN
-   */
   useEffect(() => {
     setDisplayLiveMinute(liveMinute);
 
@@ -320,9 +287,6 @@ export function TipForm({
     finished,
   ]);
 
-  /*
-   * TIPP SPEICHERN
-   */
   async function saveTip() {
     setLoading(true);
     setMessage("");
@@ -332,9 +296,7 @@ export function TipForm({
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage(
-        "Du musst eingeloggt sein."
-      );
+      setMessage("Du musst eingeloggt sein.");
       setLoading(false);
       return;
     }
@@ -365,12 +327,10 @@ export function TipForm({
           user_id: user.id,
           match_id: matchId,
           fcsg_tip: Number(fcsgTip),
-          opponent_tip:
-            Number(opponentTip),
+          opponent_tip: Number(opponentTip),
         },
         {
-          onConflict:
-            "user_id,match_id",
+          onConflict: "user_id,match_id",
         }
       );
 
@@ -387,9 +347,6 @@ export function TipForm({
     setLoading(false);
   }
 
-  /*
-   * TIPP LINKS / RECHTS
-   */
   const displayedTipLeft =
     isHome
       ? fcsgTip
@@ -416,9 +373,6 @@ export function TipForm({
         ? savedOpponentTip
         : savedFcsgTip;
 
-  /*
-   * ENDSTAND
-   */
   const displayedScoreLeft =
     isHome
       ? fcsgScore
@@ -429,9 +383,6 @@ export function TipForm({
       ? opponentScore
       : fcsgScore;
 
-  /*
-   * TEAMNAMEN
-   */
   const leftTeamName =
     isHome
       ? "FC St. Gallen"
@@ -442,9 +393,6 @@ export function TipForm({
       ? opponentName
       : "FC St. Gallen";
 
-  /*
-   * LOGOS
-   */
   const leftTeamLogo =
     isHome
       ? "/logos/fcsg.svg"
@@ -455,9 +403,6 @@ export function TipForm({
       ? opponentLogo
       : "/logos/fcsg.svg";
 
-  /*
-   * LIVE-SPIELSTAND
-   */
   const liveScoreLeft =
     isHome
       ? liveHomeScore
@@ -468,16 +413,9 @@ export function TipForm({
       ? liveAwayScore
       : liveHomeScore;
 
-  /*
-   * EVENTS
-   */
   const allEvents =
     (liveEvents ?? []) as MatchEvent[];
 
-  /*
-   * Auf Hauptkarte nur
-   * Tore und Karten.
-   */
   const keyEvents =
     allEvents.filter((event) => {
       const type =
@@ -515,9 +453,6 @@ export function TipForm({
       ? opponentKeyEvents
       : fcsgKeyEvents;
 
-  /*
-   * LIVE STATUS
-   */
   const isLive =
     !finished &&
     gameStarted &&
@@ -547,6 +482,11 @@ export function TipForm({
       : gameStarted
         ? "bg-red-600 text-white"
         : "bg-green-100 text-green-800";
+
+  const hasMatchDetails =
+    (liveEvents?.length ?? 0) > 0 ||
+    (liveLineups?.length ?? 0) > 0 ||
+    (liveStatistics?.length ?? 0) > 0;
 
   return (
     <div className="mt-5">
@@ -580,14 +520,12 @@ export function TipForm({
 
       {/* TEAMS */}
       <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:gap-6 items-start">
-
         {/* LINKES TEAM */}
         <div className="flex flex-col items-center text-center min-w-0">
           <p className="font-bold mb-3 min-h-12 flex items-end justify-center text-sm sm:text-base">
             {leftTeamName}
           </p>
 
-          {/* GRÖSSERES LOGO */}
           <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center mb-4">
             {leftTeamLogo ? (
               <img
@@ -639,13 +577,6 @@ export function TipForm({
                 "
               />
             )}
-
-          {(gameStarted ||
-            finished) && (
-            <TeamKeyEvents
-              events={leftKeyEvents}
-            />
-          )}
         </div>
 
         {/* MITTE */}
@@ -679,7 +610,6 @@ export function TipForm({
               </span>
             </>
           ) : (
-            /* NEUES VS-BADGE */
             <div
               className="
                 flex
@@ -707,7 +637,6 @@ export function TipForm({
             {rightTeamName}
           </p>
 
-          {/* GRÖSSERES LOGO */}
           <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center mb-4">
             {rightTeamLogo ? (
               <img
@@ -759,13 +688,6 @@ export function TipForm({
                 "
               />
             )}
-
-          {(gameStarted ||
-            finished) && (
-            <TeamKeyEvents
-              events={rightKeyEvents}
-            />
-          )}
         </div>
       </div>
 
@@ -870,16 +792,99 @@ export function TipForm({
         </p>
       )}
 
-      {/* MATCHDETAILS */}
-      <MatchDetails
-        events={liveEvents as any[]}
-        lineups={liveLineups as any[]}
-        statistics={
-          liveStatistics as any[]
-        }
-        isHome={isHome}
-        opponentName={opponentName}
-      />
+      {/* SPIELDETAILS */}
+      {hasMatchDetails &&
+        (gameStarted || finished) && (
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() =>
+                setShowMatchDetails(
+                  (current) => !current
+                )
+              }
+              className="
+                w-full
+                flex
+                items-center
+                justify-between
+                bg-gray-50
+                hover:bg-gray-100
+                border
+                border-gray-200
+                rounded-xl
+                px-4
+                py-3
+                font-bold
+                text-sm
+                transition
+              "
+            >
+              <span>
+                ⚽ Matchdetails
+              </span>
+
+              <span
+                className={`
+                  transition-transform
+                  duration-200
+                  ${
+                    showMatchDetails
+                      ? "rotate-180"
+                      : ""
+                  }
+                `}
+              >
+                ▼
+              </span>
+            </button>
+
+            {showMatchDetails && (
+              <div className="mt-4">
+                {(leftKeyEvents.length > 0 ||
+                  rightKeyEvents.length > 0) && (
+                  <div className="mb-6">
+                    <h3 className="font-black text-lg mb-3">
+                      Tore & Karten
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-3 sm:gap-6">
+                      <div>
+                        <p className="text-sm font-bold text-center mb-2">
+                          {leftTeamName}
+                        </p>
+
+                        <TeamKeyEvents
+                          events={leftKeyEvents}
+                        />
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-bold text-center mb-2">
+                          {rightTeamName}
+                        </p>
+
+                        <TeamKeyEvents
+                          events={rightKeyEvents}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <MatchDetails
+                  events={liveEvents as any[]}
+                  lineups={liveLineups as any[]}
+                  statistics={
+                    liveStatistics as any[]
+                  }
+                  isHome={isHome}
+                  opponentName={opponentName}
+                />
+              </div>
+            )}
+          </div>
+        )}
     </div>
   );
 }

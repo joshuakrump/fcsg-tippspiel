@@ -4,6 +4,7 @@ import { Navigation } from "@/components/navigation";
 import { AppHeader } from "@/components/app-header";
 import { TipForm } from "@/components/tip-form";
 import { MatchTips } from "@/components/match-tips";
+import { AppShell } from "@/components/app-shell";
 
 async function ResultsList() {
   const supabase = await createClient();
@@ -106,18 +107,22 @@ async function ResultsList() {
   );
 }
 
-export default function ErgebnissePage() {
+  export default function ErgebnissePage() {
   return (
-    <main className="min-h-screen bg-green-950 text-white p-6 md:p-8">
-      <div className="max-w-2xl mx-auto">
-        <AppHeader subtitle="Alle abgeschlossenen Spiele" />
+    <AppShell>
+      <AppHeader subtitle="Alle abgeschlossenen Spiele" />
 
-        <Navigation />
+      <Navigation />
 
-        <Suspense fallback={<p>Ergebnisse werden geladen...</p>}>
-          <ResultsList />
-        </Suspense>
-      </div>
-    </main>
+      <Suspense
+        fallback={
+          <p className="text-green-200">
+            Ergebnisse werden geladen...
+          </p>
+        }
+      >
+        <ResultsList />
+      </Suspense>
+    </AppShell>
   );
 }

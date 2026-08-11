@@ -121,7 +121,6 @@ function TeamSubstitutions({
               items-start
             "
           >
-            {/* Minute */}
             <span
               className="
                 text-[11px]
@@ -135,9 +134,7 @@ function TeamSubstitutions({
               {getMinute(event)}
             </span>
 
-            {/* Spieler */}
             <div className="min-w-0">
-              {/* RAUS */}
               <div
                 className="
                   grid
@@ -163,7 +160,6 @@ function TeamSubstitutions({
                 </p>
               </div>
 
-              {/* REIN */}
               <div
                 className="
                   grid
@@ -412,7 +408,6 @@ function StatisticsView({
 
   return (
     <div>
-      {/* TEAMNAMEN */}
       <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center mb-6">
         <p className="font-black text-center text-sm sm:text-base">
           {leftTeamName}
@@ -441,9 +436,6 @@ function StatisticsView({
               row.type
             );
 
-          /*
-           * BALLBESITZ
-           */
           if (row.bar) {
             const leftPercentage =
               parsePercentage(
@@ -512,9 +504,6 @@ function StatisticsView({
             );
           }
 
-          /*
-           * NORMALE STATISTIK
-           */
           const leftNumber =
             typeof leftValue === "number"
               ? leftValue
@@ -604,6 +593,7 @@ function StatisticsView({
     </div>
   );
 }
+
 /* =========================================================
    MATCHDETAILS
 ========================================================= */
@@ -716,7 +706,7 @@ export function MatchDetails({
 
       {open && (
         <div className="mt-3 border border-gray-200 rounded-xl p-4">
-          {/* TABS */}
+          {/* TABS IMMER OBEN */}
           <div className="grid grid-cols-3 gap-2 mb-6">
             <button
               type="button"
@@ -724,10 +714,16 @@ export function MatchDetails({
                 setTab("substitutions")
               }
               className={`
-                px-2 py-2.5
+                min-w-0
+                w-full
+                px-1.5
+                py-2.5
                 rounded-lg
-                text-xs sm:text-sm
+                text-[10px]
+                sm:text-sm
                 font-semibold
+                whitespace-nowrap
+                transition
                 ${
                   tab === "substitutions"
                     ? "bg-green-700 text-white"
@@ -744,10 +740,16 @@ export function MatchDetails({
                 setTab("lineups")
               }
               className={`
-                px-2 py-2.5
+                min-w-0
+                w-full
+                px-1.5
+                py-2.5
                 rounded-lg
-                text-xs sm:text-sm
+                text-[10px]
+                sm:text-sm
                 font-semibold
+                whitespace-nowrap
+                transition
                 ${
                   tab === "lineups"
                     ? "bg-green-700 text-white"
@@ -764,10 +766,16 @@ export function MatchDetails({
                 setTab("statistics")
               }
               className={`
-                px-2 py-2.5
+                min-w-0
+                w-full
+                px-1.5
+                py-2.5
                 rounded-lg
-                text-xs sm:text-sm
+                text-[10px]
+                sm:text-sm
                 font-semibold
+                whitespace-nowrap
+                transition
                 ${
                   tab === "statistics"
                     ? "bg-green-700 text-white"

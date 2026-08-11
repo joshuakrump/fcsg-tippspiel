@@ -8,6 +8,7 @@ import { AppHeader } from "@/components/app-header";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { AppShell } from "@/components/app-shell";
 
 function formatKickoff(kickoff: string) {
   return new Date(kickoff).toLocaleString("de-CH", {
@@ -434,68 +435,16 @@ async function ProtectedHome() {
 
 export default function Home() {
   return (
-    <main
-      className="
-        relative
-        min-h-screen
-        overflow-hidden
-        bg-green-950
-        text-white
-        px-4 py-6
-        sm:px-6 sm:py-8
-        md:px-8
-      "
-    >
-
-{/* Linker Bär */}
-<img
-  src="/images/stgallen-baer.png"
-  alt=""
-  aria-hidden="true"
-  className="
-    pointer-events-none
-    select-none
-    absolute
-    left-[-20px]
-    top-[260px]
-    hidden
-    xl:block
-    w-[620px]
-    opacity-[0.2]
-    scale-x-[-1]
-  "
-/>
-
-{/* Rechter Bär */}
-<img
-  src="/images/stgallen-baer.png"
-  alt=""
-  aria-hidden="true"
-  className="
-    pointer-events-none
-    select-none
-    absolute
-    right-[-20px]
-    top-[260px]
-    hidden
-    xl:block
-    w-[620px]
-    opacity-[0.2]
-  "
-/>
-
-      {/* Inhalt der Webseite */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto">
-        <Suspense
-          fallback={
-            <div className="py-20 text-center text-green-200">
-              Tippspiel wird geladen...
-            </div>
-          }
-        >
-          <ProtectedHome />
-        </Suspense>
-      </div>
-    </main>
+    <AppShell>
+      <Suspense
+        fallback={
+          <div className="py-20 text-center text-green-200">
+            Tippspiel wird geladen...
+          </div>
+        }
+      >
+        <ProtectedHome />
+      </Suspense>
+    </AppShell>
   );
 }

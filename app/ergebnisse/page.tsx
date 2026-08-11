@@ -1,29 +1,37 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Navigation } from "@/components/navigation";
+import { AppHeader } from "@/components/app-header";
+import { MatchTips } from "@/components/match-tips";
 
-async function SpielplanContent() {
+async function ResultsList() {
   const supabase = await createClient();
 
   const { data: matches, error } = await supabase
     .from("matches")
     .select("*")
-    .eq("finished", false)
-    .order("kickoff", { ascending: true });
+    .eq("finished", true)
+    .order("kickoff", { ascending: false });
 
   if (error) {
     return (
       <p className="text-red-300">
-        Spielplan konnte nicht geladen werden.
+        Ergebnisse konnten nicht geladen werden: {error.message}
       </p>
     );
   }
 
-  return (
-    <div className="space-y-4">
-      {matches?.map((match, index) => {
-        const isNextMatch = index === 0;
+  if (!matches || matches.length === 0) {
+    return (
+      <div className="bg-white text-black rounded-2xl p-6 shadow-xl">
+        Noch keine abgeschlossenen Spiele vorhanden.
+      </div>
+    );
+  }
 
+  return (
+    <div className="space-y-5">
+      {matches.map((match) => {
         const leftTeamName = match.is_home
           ? "FC St. Gallen"
           : match.opponent;
@@ -40,107 +48,104 @@ async function SpielplanContent() {
           ? match.opponent_logo
           : "/logos/fcsg.svg";
 
+        const leftScore = match.is_home
+          ? match.fcsg_score
+          : match.opponent_score;
+
+        const rightScore = match.is_home
+          ? match.opponent_score
+          : match.fcsg_score;
+
         return (
-          <div
+          <article
             key={match.id}
-            className={`
-              rounded-2xl p-5 border
-              ${
-                isNextMatch
-                  ? "bg-white text-black border-green-300 shadow-lg"
-                  : "bg-white/95 text-black border-white/20"
-              }
-            `}
+            className="bg-white text-black rounded-2xl p-5 sm:p-6 shadow-xl"
           >
-            {isNextMatch && (
-              <div className="mb-3">
-                <span className="inline-block bg-green-700 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  Nächstes Spiel
-                </span>
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <p className="text-sm text-gray-500 font-semibold">
+                {new Date(match.kickoff).toLocaleString("de-CH", {
+                  timeZone: "Europe/Zurich",
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+
+              <span className="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full">
+                Beendet
+              </span>
+            </div>
+
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+              {/* Team links */}
+              <div className="flex flex-col items-center text-center">
+                {leftTeamLogo && (
+                  <img
+                    src={leftTeamLogo}
+                    alt={`${leftTeamName} Logo`}
+                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain mb-2"
+                  />
+                )}
+
+                <p className="font-bold text-sm sm:text-base">
+                  {leftTeamName}
+                </p>
               </div>
-            )}
 
-            <div className="flex items-center justify-between gap-4">
-  <div className="min-w-0 flex-1">
-    <p className="text-sm text-gray-500 font-semibold mb-1">
-      {match.is_home ? "Heimspiel" : "Auswärtsspiel"}
-    </p>
+              {/* Resultat */}
+              <div className="text-center px-2">
+                <p className="text-xs text-gray-500 font-semibold mb-1">
+                  ENDSTAND
+                </p>
 
-    <div className="flex items-center gap-3">
-      {leftTeamLogo ? (
-        <img
-          src={leftTeamLogo}
-          alt={`${leftTeamName} Logo`}
-          className="w-11 h-11 object-contain shrink-0"
-        />
-      ) : (
-        <div className="w-11 h-11 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400 shrink-0">
-          ?
-        </div>
-      )}
+                <p className="text-3xl sm:text-4xl font-black whitespace-nowrap">
+                  {leftScore} : {rightScore}
+                </p>
+              </div>
 
-      <p className="font-bold text-lg sm:text-xl whitespace-nowrap">
-        {leftTeamName} – {rightTeamName}
-      </p>
+              {/* Team rechts */}
+              <div className="flex flex-col items-center text-center">
+                {rightTeamLogo && (
+                  <img
+                    src={rightTeamLogo}
+                    alt={`${rightTeamName} Logo`}
+                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain mb-2"
+                  />
+                )}
 
-      {rightTeamLogo ? (
-        <img
-          src={rightTeamLogo}
-          alt={`${rightTeamName} Logo`}
-          className="w-11 h-11 object-contain shrink-0"
-        />
-      ) : (
-        <div className="w-11 h-11 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400 shrink-0">
-          ?
-        </div>
-      )}
-    </div>
-  </div>
+                <p className="font-bold text-sm sm:text-base">
+                  {rightTeamName}
+                </p>
+              </div>
+            </div>
 
-  <div className="text-right shrink-0">
-    <p className="font-semibold">
-      {new Date(match.kickoff).toLocaleDateString("de-CH", {
-        timeZone: "Europe/Zurich",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })}
-    </p>
-
-    <p className="text-gray-500">
-      {new Date(match.kickoff).toLocaleTimeString("de-CH", {
-        timeZone: "Europe/Zurich",
-        hour: "2-digit",
-        minute: "2-digit",
-      })}
-    </p>
-  </div>
-</div>
-          </div>
+            <div className="mt-6 pt-5 border-t border-gray-200">
+              <MatchTips
+                matchId={match.id}
+                kickoff={match.kickoff}
+                isHome={match.is_home}
+                finished={match.finished}
+              />
+            </div>
+          </article>
         );
       })}
     </div>
   );
 }
 
-export default function SpielplanPage() {
+export default function ErgebnissePage() {
   return (
     <main className="min-h-screen bg-green-950 text-white p-6 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">
-          Spielplan
-        </h1>
+      <div className="max-w-2xl mx-auto">
+        <AppHeader subtitle="Alle abgeschlossenen Spiele" />
 
         <Navigation />
 
-        <Suspense
-          fallback={
-            <p className="text-green-200">
-              Spielplan wird geladen...
-            </p>
-          }
-        >
-          <SpielplanContent />
+        <Suspense fallback={<p>Ergebnisse werden geladen...</p>}>
+          <ResultsList />
         </Suspense>
       </div>
     </main>

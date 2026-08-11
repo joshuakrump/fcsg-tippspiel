@@ -1,96 +1,146 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Navigation } from "@/components/navigation";
-import { AppHeader } from "@/components/app-header";
-import { TipForm } from "@/components/tip-form";
-import { MatchTips } from "@/components/match-tips";
-import { AutoRefresh } from "@/components/auto-refresh";
 
-async function ResultsList() {
+async function SpielplanContent() {
   const supabase = await createClient();
 
   const { data: matches, error } = await supabase
     .from("matches")
     .select("*")
-    .eq("finished", true)
-    .order("kickoff", { ascending: false });
+    .eq("finished", false)
+    .order("kickoff", { ascending: true });
 
   if (error) {
     return (
       <p className="text-red-300">
-        Ergebnisse konnten nicht geladen werden: {error.message}
+        Spielplan konnte nicht geladen werden.
       </p>
     );
   }
 
-  if (!matches || matches.length === 0) {
-    return (
-      <div className="bg-white text-black rounded-2xl p-6 shadow-xl">
-        Noch keine abgeschlossenen Spiele vorhanden.
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-5">
-      {matches.map((match) => (
-        <div
-          key={match.id}
-          className="bg-white text-black rounded-2xl p-5 shadow-xl"
-        >
-          <p className="text-sm text-gray-500">
-            {new Date(match.kickoff).toLocaleString("de-CH")}
-          </p>
+    <div className="space-y-4">
+      {matches?.map((match, index) => {
+        const isNextMatch = index === 0;
 
-          <h2 className="text-xl font-black mt-1">
-            {match.is_home
-              ? `FC St. Gallen – ${match.opponent}`
-              : `${match.opponent} – FC St. Gallen`}
-          </h2>
+        const leftTeamName = match.is_home
+          ? "FC St. Gallen"
+          : match.opponent;
 
-         <TipForm
-  matchId={match.id}
-  kickoff={match.kickoff}
-  isHome={match.is_home}
-  finished={match.finished}
-  fcsgScore={match.fcsg_score}
-  opponentScore={match.opponent_score}
-  opponentName={match.opponent}
-  opponentLogo={match.opponent_logo}
-  liveStatus={match.live_status}
-  liveMinute={match.live_minute}
-  liveExtra={match.live_extra}
-  liveHomeScore={match.live_home_score}
-  liveAwayScore={match.live_away_score}
-  liveEvents={match.live_events}
-  liveLineups={match.live_lineups}
-  liveStatistics={match.live_statistics}
-/>
+        const rightTeamName = match.is_home
+          ? match.opponent
+          : "FC St. Gallen";
 
-          <MatchTips
-            matchId={match.id}
-            kickoff={match.kickoff}
-            isHome={match.is_home}
-            finished={match.finished}
-          />
+        const leftTeamLogo = match.is_home
+          ? "/logos/fcsg.svg"
+          : match.opponent_logo;
+
+        const rightTeamLogo = match.is_home
+          ? match.opponent_logo
+          : "/logos/fcsg.svg";
+
+        return (
+          <div
+            key={match.id}
+            className={`
+              rounded-2xl p-5 border
+              ${
+                isNextMatch
+                  ? "bg-white text-black border-green-300 shadow-lg"
+                  : "bg-white/95 text-black border-white/20"
+              }
+            `}
+          >
+            {isNextMatch && (
+              <div className="mb-3">
+                <span className="inline-block bg-green-700 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  Nächstes Spiel
+                </span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-4">
+  <div className="min-w-0 flex-1">
+    <p className="text-sm text-gray-500 font-semibold mb-1">
+      {match.is_home ? "Heimspiel" : "Auswärtsspiel"}
+    </p>
+
+    <div className="flex items-center gap-3">
+      {leftTeamLogo ? (
+        <img
+          src={leftTeamLogo}
+          alt={`${leftTeamName} Logo`}
+          className="w-11 h-11 object-contain shrink-0"
+        />
+      ) : (
+        <div className="w-11 h-11 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400 shrink-0">
+          ?
         </div>
-      ))}
+      )}
+
+      <p className="font-bold text-lg sm:text-xl whitespace-nowrap">
+        {leftTeamName} – {rightTeamName}
+      </p>
+
+      {rightTeamLogo ? (
+        <img
+          src={rightTeamLogo}
+          alt={`${rightTeamName} Logo`}
+          className="w-11 h-11 object-contain shrink-0"
+        />
+      ) : (
+        <div className="w-11 h-11 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400 shrink-0">
+          ?
+        </div>
+      )}
+    </div>
+  </div>
+
+  <div className="text-right shrink-0">
+    <p className="font-semibold">
+      {new Date(match.kickoff).toLocaleDateString("de-CH", {
+        timeZone: "Europe/Zurich",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })}
+    </p>
+
+    <p className="text-gray-500">
+      {new Date(match.kickoff).toLocaleTimeString("de-CH", {
+        timeZone: "Europe/Zurich",
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+    </p>
+  </div>
+</div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-export default function ErgebnissePage() {
+export default function SpielplanPage() {
   return (
     <main className="min-h-screen bg-green-950 text-white p-6 md:p-8">
-      <div className="max-w-2xl mx-auto">
-        <AutoRefresh nextKickoff={null} />
-
-        <AppHeader subtitle="Alle abgeschlossenen Spiele" />
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold mb-8">
+          Spielplan
+        </h1>
 
         <Navigation />
 
-        <Suspense fallback={<p>Ergebnisse werden geladen...</p>}>
-          <ResultsList />
+        <Suspense
+          fallback={
+            <p className="text-green-200">
+              Spielplan wird geladen...
+            </p>
+          }
+        >
+          <SpielplanContent />
         </Suspense>
       </div>
     </main>

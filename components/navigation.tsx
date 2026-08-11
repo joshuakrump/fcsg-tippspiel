@@ -10,6 +10,11 @@ const items = [
     icon: "⚽",
   },
   {
+  href: "/spielplan",
+  label: "Spielplan",
+  icon: "🗓️",
+},
+  {
     href: "/ergebnisse",
     label: "Ergebnisse",
     icon: "📅",
@@ -31,7 +36,7 @@ export function Navigation() {
 
   return (
     <nav className="bg-black/20 border border-white/10 rounded-2xl p-1.5 mb-8">
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-5 gap-1.5">
         {items.map((item) => {
           const active =
             item.href === "/"

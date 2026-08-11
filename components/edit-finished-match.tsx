@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatInTimeZone } from "date-fns-tz";
 
 type EditFinishedMatchProps = {
   match: {
@@ -62,9 +63,11 @@ export function EditFinishedMatch({
             <input
               name="kickoff"
               type="datetime-local"
-              defaultValue={new Date(match.kickoff)
-                .toISOString()
-                .slice(0, 16)}
+              defaultValue={formatInTimeZone(
+                new Date(match.kickoff),
+                "Europe/Zurich",
+                "yyyy-MM-dd'T'HH:mm"
+              )}
               required
               className="w-full border rounded-lg p-2"
             />

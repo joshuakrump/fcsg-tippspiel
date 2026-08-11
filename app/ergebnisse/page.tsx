@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Navigation } from "@/components/navigation";
 import { AppHeader } from "@/components/app-header";
+import { TipForm } from "@/components/tip-form";
 import { MatchTips } from "@/components/match-tips";
 
 async function ResultsList() {
@@ -30,108 +31,77 @@ async function ResultsList() {
   }
 
   return (
-    <div className="space-y-5">
-      {matches.map((match) => {
-        const leftTeamName = match.is_home
-          ? "FC St. Gallen"
-          : match.opponent;
-
-        const rightTeamName = match.is_home
-          ? match.opponent
-          : "FC St. Gallen";
-
-        const leftTeamLogo = match.is_home
-          ? "/logos/fcsg.svg"
-          : match.opponent_logo;
-
-        const rightTeamLogo = match.is_home
-          ? match.opponent_logo
-          : "/logos/fcsg.svg";
-
-        const leftScore = match.is_home
-          ? match.fcsg_score
-          : match.opponent_score;
-
-        const rightScore = match.is_home
-          ? match.opponent_score
-          : match.fcsg_score;
-
-        return (
-          <article
-            key={match.id}
-            className="bg-white text-black rounded-2xl p-5 sm:p-6 shadow-xl"
-          >
-            <div className="flex items-center justify-between gap-4 mb-5">
-              <p className="text-sm text-gray-500 font-semibold">
-                {new Date(match.kickoff).toLocaleString("de-CH", {
-                  timeZone: "Europe/Zurich",
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
-
-              <span className="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full">
-                Beendet
-              </span>
+    <div className="space-y-6">
+      {matches.map((match) => (
+        <article
+          key={match.id}
+          className="
+            bg-white
+            text-black
+            rounded-3xl
+            p-5 sm:p-7
+            shadow-2xl
+            border border-gray-200
+          "
+        >
+          <div className="mb-1">
+            <div
+              className="
+                inline-flex
+                items-center
+                bg-gray-100
+                text-gray-500
+                rounded-full
+                px-3 py-1
+                text-xs
+                font-semibold
+                mb-3
+              "
+            >
+              {new Date(match.kickoff).toLocaleString("de-CH", {
+                timeZone: "Europe/Zurich",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </div>
 
-            <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
-              {/* Team links */}
-              <div className="flex flex-col items-center text-center">
-                {leftTeamLogo && (
-                  <img
-                    src={leftTeamLogo}
-                    alt={`${leftTeamName} Logo`}
-                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain mb-2"
-                  />
-                )}
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+              {match.is_home
+                ? `FC St. Gallen – ${match.opponent}`
+                : `${match.opponent} – FC St. Gallen`}
+            </h2>
+          </div>
 
-                <p className="font-bold text-sm sm:text-base">
-                  {leftTeamName}
-                </p>
-              </div>
+          <TipForm
+            matchId={match.id}
+            kickoff={match.kickoff}
+            isHome={match.is_home}
+            finished={match.finished}
+            fcsgScore={match.fcsg_score}
+            opponentScore={match.opponent_score}
+            opponentName={match.opponent}
+            opponentLogo={match.opponent_logo}
+            liveStatus={match.live_status}
+            liveMinute={match.live_minute}
+            liveExtra={match.live_extra}
+            liveHomeScore={match.live_home_score}
+            liveAwayScore={match.live_away_score}
+            liveEvents={match.live_events}
+            liveLineups={match.live_lineups}
+            liveStatistics={match.live_statistics}
+          />
 
-              {/* Resultat */}
-              <div className="text-center px-2">
-                <p className="text-xs text-gray-500 font-semibold mb-1">
-                  ENDSTAND
-                </p>
-
-                <p className="text-3xl sm:text-4xl font-black whitespace-nowrap">
-                  {leftScore} : {rightScore}
-                </p>
-              </div>
-
-              {/* Team rechts */}
-              <div className="flex flex-col items-center text-center">
-                {rightTeamLogo && (
-                  <img
-                    src={rightTeamLogo}
-                    alt={`${rightTeamName} Logo`}
-                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain mb-2"
-                  />
-                )}
-
-                <p className="font-bold text-sm sm:text-base">
-                  {rightTeamName}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-5 border-t border-gray-200">
-              <MatchTips
-                matchId={match.id}
-                kickoff={match.kickoff}
-                isHome={match.is_home}
-                finished={match.finished}
-              />
-            </div>
-          </article>
-        );
-      })}
+          <MatchTips
+            matchId={match.id}
+            kickoff={match.kickoff}
+            isHome={match.is_home}
+            finished={match.finished}
+          />
+        </article>
+      ))}
     </div>
   );
 }

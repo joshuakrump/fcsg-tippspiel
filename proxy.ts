@@ -6,13 +6,14 @@ export async function proxy(request: NextRequest) {
 
   // Admin-Bereich benutzt unseren separaten Admin-Login
   // und soll NICHT vom normalen Supabase-Spielerlogin abgefangen werden.
-  if (
-    pathname === "/admin-login" ||
-    pathname === "/admin" ||
-    pathname.startsWith("/admin/")
-  ) {
-    return NextResponse.next();
-  }
+if (
+  pathname === "/admin-login" ||
+  pathname === "/admin" ||
+  pathname.startsWith("/admin/") ||
+  pathname === "/api/live-sync"
+) {
+  return NextResponse.next();
+}
 
   // Alle anderen Seiten verwenden weiterhin
   // die normale Supabase-Session.

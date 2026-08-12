@@ -19,6 +19,7 @@ async function Ranking() {
     .select(`
       id,
       username,
+      is_hidden,
       tips (
         points
       )
@@ -34,7 +35,8 @@ async function Ranking() {
 
   const rankingWithPoints =
     ranking
-      ?.map((player) => ({
+      ?.filter((player) => !player.is_hidden)
+      .map((player) => ({
         id: player.id,
         username: player.username,
         points:

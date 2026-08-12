@@ -48,7 +48,11 @@ export function PushNotifications() {
 
         setEnabled(Boolean(subscription));
       } catch (error) {
-        console.error("Push-Setup konnte nicht geprüft werden:", error);
+        console.error(
+          "Push-Setup konnte nicht geprüft werden:",
+          error,
+        );
+
         setSupported(false);
       }
     }
@@ -61,10 +65,13 @@ export function PushNotifications() {
       setLoading(true);
       setMessage("");
 
-      const permission = await Notification.requestPermission();
+      const permission =
+        await Notification.requestPermission();
 
       if (permission !== "granted") {
-        setMessage("Benachrichtigungen wurden nicht erlaubt.");
+        setMessage(
+          "Benachrichtigungen wurden nicht erlaubt.",
+        );
         return;
       }
 
@@ -75,18 +82,21 @@ export function PushNotifications() {
         process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
       if (!publicKey) {
-        throw new Error("VAPID Public Key fehlt.");
+        throw new Error(
+          "VAPID Public Key fehlt.",
+        );
       }
 
       let subscription =
         await registration.pushManager.getSubscription();
 
       if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey:
-            urlBase64ToUint8Array(publicKey),
-        });
+        subscription =
+          await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey:
+              urlBase64ToUint8Array(publicKey),
+          });
       }
 
       const supabase = createClient();
@@ -96,10 +106,13 @@ export function PushNotifications() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        throw new Error("Du bist nicht eingeloggt.");
+        throw new Error(
+          "Du bist nicht eingeloggt.",
+        );
       }
 
-      const json = subscription.toJSON();
+      const json =
+        subscription.toJSON();
 
       if (
         !json.endpoint ||
@@ -130,16 +143,108 @@ export function PushNotifications() {
       }
 
       setEnabled(true);
+
       setMessage(
         "Live-Benachrichtigungen sind aktiviert.",
       );
     } catch (error) {
-      console.error("Push-Aktivierung fehlgeschlagen:", error);
+      console.error(
+        "Push-Aktivierung fehlgeschlagen:",
+        error,
+      );
 
       setMessage(
         error instanceof Error
           ? error.message
           : "Benachrichtigungen konnten nicht aktiviert werden.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function disableNotifications() {
+    try {
+      setLoading(true);
+      setMessage("");
+
+      const registration =
+        await navigator.serviceWorker.getRegistration("/sw.js");
+
+      if (!registration) {
+        setEnabled(false);
+        return;
+      }
+
+      const subscription =
+        await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        setEnabled(false);
+
+        setMessage(
+          "Live-Benachrichtigungen sind bereits deaktiviert.",
+        );
+
+        return;
+      }
+
+      const endpoint =
+        subscription.endpoint;
+
+      const supabase = createClient();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error(
+          "Du bist nicht eingeloggt.",
+        );
+      }
+
+      /*
+       * Zuerst Eintrag in Supabase löschen.
+       */
+      const { error: deleteError } =
+        await supabase
+          .from("push_subscriptions")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("endpoint", endpoint);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      /*
+       * Danach Browser-Subscription deaktivieren.
+       */
+      const unsubscribed =
+        await subscription.unsubscribe();
+
+      if (!unsubscribed) {
+        throw new Error(
+          "Browser-Subscription konnte nicht deaktiviert werden.",
+        );
+      }
+
+      setEnabled(false);
+
+      setMessage(
+        "Live-Benachrichtigungen sind deaktiviert.",
+      );
+    } catch (error) {
+      console.error(
+        "Push-Deaktivierung fehlgeschlagen:",
+        error,
+      );
+
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Benachrichtigungen konnten nicht deaktiviert werden.",
       );
     } finally {
       setLoading(false);
@@ -163,28 +268,49 @@ export function PushNotifications() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={enableNotifications}
-          disabled={loading || enabled}
-          className="
-            rounded-lg
-            bg-green-600
-            px-4 py-2
-            font-semibold
-            text-white
-            transition
-            hover:bg-green-500
-            disabled:cursor-default
-            disabled:opacity-60
-          "
-        >
-          {loading
-            ? "Wird aktiviert..."
-            : enabled
-              ? "✓ Aktiviert"
+        {enabled ? (
+          <button
+            type="button"
+            onClick={disableNotifications}
+            disabled={loading}
+            className="
+              rounded-lg
+              bg-red-600
+              px-4 py-2
+              font-semibold
+              text-white
+              transition
+              hover:bg-red-500
+              disabled:cursor-default
+              disabled:opacity-60
+            "
+          >
+            {loading
+              ? "Wird deaktiviert..."
+              : "Deaktivieren"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={enableNotifications}
+            disabled={loading}
+            className="
+              rounded-lg
+              bg-green-600
+              px-4 py-2
+              font-semibold
+              text-white
+              transition
+              hover:bg-green-500
+              disabled:cursor-default
+              disabled:opacity-60
+            "
+          >
+            {loading
+              ? "Wird aktiviert..."
               : "Aktivieren"}
-        </button>
+          </button>
+        )}
       </div>
 
       {message && (

@@ -9,7 +9,19 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: "FCSG Tippspiel",
-  description: "Tippspiel für die Spiele des FC St. Gallen",
+  description:
+    "Tippe die Spiele des FC St. Gallen, verfolge den Live-Ticker und kämpfe um den ersten Platz in der Rangliste.",
+  openGraph: {
+    title: "FCSG Tippspiel",
+    description: "Tippen. Mitfiebern. Gewinnen.",
+    type: "website",
+    locale: "de_CH",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FCSG Tippspiel",
+    description: "Tippen. Mitfiebern. Gewinnen.",
+  },
 };
 
 export default function RootLayout({

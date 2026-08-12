@@ -53,18 +53,24 @@ export function MatchTips({
 
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, username")
+        .select("id, username, is_hidden")
         .in("id", userIds);
 
-      const visibleTips = tipData.map((tip) => {
+      const visibleTips = tipData.flatMap((tip) => {
         const profile = profiles?.find(
           (profile) => profile.id === tip.user_id
         );
 
-        return {
-          ...tip,
-          username: profile?.username ?? "Spieler",
-        };
+        if (profile?.is_hidden) {
+          return [];
+        }
+
+        return [
+          {
+            ...tip,
+            username: profile?.username ?? "Spieler",
+          },
+        ];
       });
 
       setTips(visibleTips);

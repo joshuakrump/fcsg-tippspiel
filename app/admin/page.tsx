@@ -293,12 +293,21 @@ async function AdminContent() {
                       Gegner
                     </label>
 
-                    <input
-                      name="opponent"
-                      defaultValue={match.opponent}
-                      required
-                      className="w-full border rounded-lg p-2"
-                    />
+                   <select
+  name="opponent"
+  defaultValue={match.opponent}
+  required
+  className="w-full border rounded-lg p-2"
+>
+  {teams?.map((team) => (
+    <option
+      key={team.id}
+      value={team.name}
+    >
+      {team.name}
+    </option>
+  ))}
+</select>
                   </div>
 
                   <div>

@@ -18,6 +18,7 @@ async function requireAdmin() {
 
 function revalidateGamePages() {
   revalidatePath("/");
+  revalidatePath("/spielplan");
   revalidatePath("/ergebnisse");
   revalidatePath("/rangliste");
   revalidatePath("/admin");
@@ -109,9 +110,15 @@ export async function updateMatch(formData: FormData) {
   await requireAdmin();
 
   const matchId = Number(formData.get("matchId"));
-  const opponent = String(formData.get("opponent") ?? "").trim();
-  const kickoffLocal = String(formData.get("kickoff") ?? "");
-  const location = String(formData.get("location") ?? "");
+  const opponent = String(
+    formData.get("opponent") ?? ""
+  ).trim();
+  const kickoffLocal = String(
+    formData.get("kickoff") ?? ""
+  );
+  const location = String(
+    formData.get("location") ?? ""
+  );
 
   if (
     !Number.isInteger(matchId) ||
@@ -124,11 +131,30 @@ export async function updateMatch(formData: FormData) {
 
   const supabase = createAdminClient();
 
+  // Gegner aus der Teams-Tabelle holen,
+  // damit Name und Logo immer zusammenpassen.
+  const { data: team, error: teamError } =
+    await supabase
+      .from("teams")
+      .select("name, logo_path")
+      .eq("name", opponent)
+      .single();
+
+  if (teamError || !team) {
+    throw new Error(
+      `Gegner "${opponent}" wurde in der Teams-Tabelle nicht gefunden.`
+    );
+  }
+
   const { error } = await supabase
     .from("matches")
     .update({
-      opponent,
-      kickoff: fromZonedTime(kickoffLocal, "Europe/Zurich").toISOString(),
+      opponent: team.name,
+      opponent_logo: team.logo_path,
+      kickoff: fromZonedTime(
+        kickoffLocal,
+        "Europe/Zurich"
+      ).toISOString(),
       is_home: location === "home",
     })
     .eq("id", matchId);
@@ -165,15 +191,27 @@ export async function adminLogout() {
   redirect("/admin-login");
 }
 
-export async function updateFinishedMatch(formData: FormData) {
+export async function updateFinishedMatch(
+  formData: FormData
+) {
   await requireAdmin();
 
   const matchId = Number(formData.get("matchId"));
-  const opponent = String(formData.get("opponent") ?? "").trim();
-  const kickoffLocal = String(formData.get("kickoff") ?? "");
-  const location = String(formData.get("location") ?? "");
-  const fcsgScore = Number(formData.get("fcsgScore"));
-  const opponentScore = Number(formData.get("opponentScore"));
+  const opponent = String(
+    formData.get("opponent") ?? ""
+  ).trim();
+  const kickoffLocal = String(
+    formData.get("kickoff") ?? ""
+  );
+  const location = String(
+    formData.get("location") ?? ""
+  );
+  const fcsgScore = Number(
+    formData.get("fcsgScore")
+  );
+  const opponentScore = Number(
+    formData.get("opponentScore")
+  );
 
   if (
     !Number.isInteger(matchId) ||
@@ -190,11 +228,28 @@ export async function updateFinishedMatch(formData: FormData) {
 
   const supabase = createAdminClient();
 
+  const { data: team, error: teamError } =
+    await supabase
+      .from("teams")
+      .select("name, logo_path")
+      .eq("name", opponent)
+      .single();
+
+  if (teamError || !team) {
+    throw new Error(
+      `Gegner "${opponent}" wurde in der Teams-Tabelle nicht gefunden.`
+    );
+  }
+
   const { error } = await supabase
     .from("matches")
     .update({
-      opponent,
-      kickoff: fromZonedTime(kickoffLocal, "Europe/Zurich").toISOString(),
+      opponent: team.name,
+      opponent_logo: team.logo_path,
+      kickoff: fromZonedTime(
+        kickoffLocal,
+        "Europe/Zurich"
+      ).toISOString(),
       is_home: location === "home",
       fcsg_score: fcsgScore,
       opponent_score: opponentScore,

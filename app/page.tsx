@@ -63,7 +63,11 @@ async function UserHeader() {
             shadow-inner
           "
         >
-          {(profile?.username ?? "S").charAt(0).toUpperCase()}
+          {(
+  profile?.username ??
+  user.user_metadata?.username ??
+  "S"
+).charAt(0).toUpperCase()}
         </div>
 
         <div>
@@ -72,7 +76,7 @@ async function UserHeader() {
           </p>
 
           <p className="text-lg font-bold leading-tight">
-            {profile?.username ?? "Spieler"}
+            {profile?.username ?? user.user_metadata?.username ?? "Spieler"}
           </p>
         </div>
       </div>

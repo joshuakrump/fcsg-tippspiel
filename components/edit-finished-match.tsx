@@ -12,11 +12,22 @@ type EditFinishedMatchProps = {
     fcsg_score: number | null;
     opponent_score: number | null;
   };
-  updateAction: (formData: FormData) => void | Promise<void>;
+
+  teams: {
+    id: number;
+    name: string;
+    short_name: string;
+    logo_path: string | null;
+  }[];
+
+  updateAction: (
+    formData: FormData
+  ) => void | Promise<void>;
 };
 
 export function EditFinishedMatch({
   match,
+  teams,
   updateAction,
 }: EditFinishedMatchProps) {
   const [open, setOpen] = useState(false);
@@ -42,19 +53,30 @@ export function EditFinishedMatch({
             value={match.id}
           />
 
+          {/* Gegner */}
           <div>
             <label className="block text-sm font-semibold mb-1">
               Gegner
             </label>
 
-            <input
+            <select
               name="opponent"
               defaultValue={match.opponent}
               required
               className="w-full border rounded-lg p-2"
-            />
+            >
+              {teams.map((team) => (
+                <option
+                  key={team.id}
+                  value={team.name}
+                >
+                  {team.name}
+                </option>
+              ))}
+            </select>
           </div>
 
+          {/* Anpfiff */}
           <div>
             <label className="block text-sm font-semibold mb-1">
               Anpfiff
@@ -73,6 +95,7 @@ export function EditFinishedMatch({
             />
           </div>
 
+          {/* Spielort */}
           <div>
             <label className="block text-sm font-semibold mb-1">
               Spielort
@@ -80,7 +103,9 @@ export function EditFinishedMatch({
 
             <select
               name="location"
-              defaultValue={match.is_home ? "home" : "away"}
+              defaultValue={
+                match.is_home ? "home" : "away"
+              }
               className="w-full border rounded-lg p-2"
             >
               <option value="home">
@@ -93,6 +118,7 @@ export function EditFinishedMatch({
             </select>
           </div>
 
+          {/* Resultat */}
           <div className="flex flex-wrap gap-3">
             <div>
               <label className="block text-sm font-semibold mb-1">
@@ -103,7 +129,9 @@ export function EditFinishedMatch({
                 name="fcsgScore"
                 type="number"
                 min="0"
-                defaultValue={match.fcsg_score ?? 0}
+                defaultValue={
+                  match.fcsg_score ?? 0
+                }
                 required
                 className="w-24 border rounded-lg p-2"
               />
@@ -118,7 +146,9 @@ export function EditFinishedMatch({
                 name="opponentScore"
                 type="number"
                 min="0"
-                defaultValue={match.opponent_score ?? 0}
+                defaultValue={
+                  match.opponent_score ?? 0
+                }
                 required
                 className="w-24 border rounded-lg p-2"
               />

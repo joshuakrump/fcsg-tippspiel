@@ -9,6 +9,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { PushNotifications } from "@/components/push-notifications";
 
 function formatKickoff(kickoff: string) {
   return new Date(kickoff).toLocaleString("de-CH", {
@@ -431,6 +432,10 @@ async function ProtectedHome() {
       <Navigation />
 
       <UserHeader />
+
+      <div className="mb-10">
+        <PushNotifications />
+      </div>
 
       <MatchList />
     </>

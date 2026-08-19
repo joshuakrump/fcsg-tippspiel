@@ -216,6 +216,7 @@ export async function importMatchesForMonth(formData: FormData) {
   const firstDay = `${year}-${String(month).padStart(2, "0")}-01`;
   const lastDayNumber = new Date(year, month, 0).getDate();
   const lastDay = `${year}-${String(month).padStart(2, "0")}-${String(lastDayNumber).padStart(2, "0")}`;
+  const headers = { "x-apisports-key": apiKey };
 
   const url =
     `https://v3.football.api-sports.io/fixtures` +
@@ -225,7 +226,7 @@ export async function importMatchesForMonth(formData: FormData) {
     `&to=${lastDay}`;
 
   const response = await fetch(url, {
-    headers: { "x-apisports-key": apiKey },
+    headers,
     cache: "no-store",
   });
 
@@ -261,10 +262,35 @@ export async function importMatchesForMonth(formData: FormData) {
 
     let fcsgScore: number | null = null;
     let opponentScore: number | null = null;
+    let liveEvents: unknown[] = [];
+    let liveLineups: unknown[] = [];
+    let liveStatistics: unknown[] = [];
 
     if (isFinished && homeGoals !== null && awayGoals !== null) {
       fcsgScore = fcsgIsHome ? homeGoals : awayGoals;
       opponentScore = fcsgIsHome ? awayGoals : homeGoals;
+
+      const [eventsResponse, lineupsResponse, statisticsResponse] = await Promise.all([
+        fetch(`https://v3.football.api-sports.io/fixtures/events?fixture=${fixtureId}`, { headers, cache: "no-store" }),
+        fetch(`https://v3.football.api-sports.io/fixtures/lineups?fixture=${fixtureId}`, { headers, cache: "no-store" }),
+        fetch(`https://v3.football.api-sports.io/fixtures/statistics?fixture=${fixtureId}`, { headers, cache: "no-store" }),
+      ]);
+
+      const [eventsData, lineupsData, statisticsData] = await Promise.all([
+        eventsResponse.json().catch(() => ({})),
+        lineupsResponse.json().catch(() => ({})),
+        statisticsResponse.json().catch(() => ({})),
+      ]);
+
+      if (eventsResponse.ok && (!eventsData.errors || Object.keys(eventsData.errors).length === 0)) {
+        liveEvents = Array.isArray(eventsData.response) ? eventsData.response : [];
+      }
+      if (lineupsResponse.ok && (!lineupsData.errors || Object.keys(lineupsData.errors).length === 0)) {
+        liveLineups = Array.isArray(lineupsData.response) ? lineupsData.response : [];
+      }
+      if (statisticsResponse.ok && (!statisticsData.errors || Object.keys(statisticsData.errors).length === 0)) {
+        liveStatistics = Array.isArray(statisticsData.response) ? statisticsData.response : [];
+      }
     }
 
     const matchData = {
@@ -281,6 +307,9 @@ export async function importMatchesForMonth(formData: FormData) {
       live_extra: item.fixture?.status?.extra ?? null,
       live_home_score: homeGoals,
       live_away_score: awayGoals,
+      live_events: liveEvents,
+      live_lineups: liveLineups,
+      live_statistics: liveStatistics,
       api_last_synced_at: syncedAt,
       competition_id: item.league?.id ?? null,
       competition_name: item.league?.name ?? "Unbekannter Wettbewerb",

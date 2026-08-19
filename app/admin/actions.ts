@@ -8,6 +8,9 @@ import { cookies } from "next/headers";
 import { isAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 
+const FCSG_TEAM_ID = 1011;
+const SUPER_LEAGUE_ID = 207;
+
 async function requireAdmin() {
   const admin = await isAdmin();
 
@@ -110,15 +113,9 @@ export async function updateMatch(formData: FormData) {
   await requireAdmin();
 
   const matchId = Number(formData.get("matchId"));
-  const opponent = String(
-    formData.get("opponent") ?? ""
-  ).trim();
-  const kickoffLocal = String(
-    formData.get("kickoff") ?? ""
-  );
-  const location = String(
-    formData.get("location") ?? ""
-  );
+  const opponent = String(formData.get("opponent") ?? "").trim();
+  const kickoffLocal = String(formData.get("kickoff") ?? "");
+  const location = String(formData.get("location") ?? "");
 
   if (
     !Number.isInteger(matchId) ||
@@ -131,19 +128,14 @@ export async function updateMatch(formData: FormData) {
 
   const supabase = createAdminClient();
 
-  // Gegner aus der Teams-Tabelle holen,
-  // damit Name und Logo immer zusammenpassen.
-  const { data: team, error: teamError } =
-    await supabase
-      .from("teams")
-      .select("name, logo_path")
-      .eq("name", opponent)
-      .single();
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("name, logo_path")
+    .eq("name", opponent)
+    .single();
 
   if (teamError || !team) {
-    throw new Error(
-      `Gegner "${opponent}" wurde in der Teams-Tabelle nicht gefunden.`
-    );
+    throw new Error(`Gegner "${opponent}" wurde in der Teams-Tabelle nicht gefunden.`);
   }
 
   const { error } = await supabase
@@ -151,10 +143,7 @@ export async function updateMatch(formData: FormData) {
     .update({
       opponent: team.name,
       opponent_logo: team.logo_path,
-      kickoff: fromZonedTime(
-        kickoffLocal,
-        "Europe/Zurich"
-      ).toISOString(),
+      kickoff: fromZonedTime(kickoffLocal, "Europe/Zurich").toISOString(),
       is_home: location === "home",
     })
     .eq("id", matchId);
@@ -191,27 +180,15 @@ export async function adminLogout() {
   redirect("/admin-login");
 }
 
-export async function updateFinishedMatch(
-  formData: FormData
-) {
+export async function updateFinishedMatch(formData: FormData) {
   await requireAdmin();
 
   const matchId = Number(formData.get("matchId"));
-  const opponent = String(
-    formData.get("opponent") ?? ""
-  ).trim();
-  const kickoffLocal = String(
-    formData.get("kickoff") ?? ""
-  );
-  const location = String(
-    formData.get("location") ?? ""
-  );
-  const fcsgScore = Number(
-    formData.get("fcsgScore")
-  );
-  const opponentScore = Number(
-    formData.get("opponentScore")
-  );
+  const opponent = String(formData.get("opponent") ?? "").trim();
+  const kickoffLocal = String(formData.get("kickoff") ?? "");
+  const location = String(formData.get("location") ?? "");
+  const fcsgScore = Number(formData.get("fcsgScore"));
+  const opponentScore = Number(formData.get("opponentScore"));
 
   if (
     !Number.isInteger(matchId) ||
@@ -228,17 +205,14 @@ export async function updateFinishedMatch(
 
   const supabase = createAdminClient();
 
-  const { data: team, error: teamError } =
-    await supabase
-      .from("teams")
-      .select("name, logo_path")
-      .eq("name", opponent)
-      .single();
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("name, logo_path")
+    .eq("name", opponent)
+    .single();
 
   if (teamError || !team) {
-    throw new Error(
-      `Gegner "${opponent}" wurde in der Teams-Tabelle nicht gefunden.`
-    );
+    throw new Error(`Gegner "${opponent}" wurde in der Teams-Tabelle nicht gefunden.`);
   }
 
   const { error } = await supabase
@@ -246,10 +220,7 @@ export async function updateFinishedMatch(
     .update({
       opponent: team.name,
       opponent_logo: team.logo_path,
-      kickoff: fromZonedTime(
-        kickoffLocal,
-        "Europe/Zurich"
-      ).toISOString(),
+      kickoff: fromZonedTime(kickoffLocal, "Europe/Zurich").toISOString(),
       is_home: location === "home",
       fcsg_score: fcsgScore,
       opponent_score: opponentScore,
@@ -286,15 +257,11 @@ export async function importMatchesForMonth(formData: FormData) {
   }
 
   const supabase = createAdminClient();
-  const FCSG_TEAM_ID = 1011;
-  const SUPER_LEAGUE_ID = 207;
   const season = month >= 7 ? year : year - 1;
 
   const firstDay = `${year}-${String(month).padStart(2, "0")}-01`;
   const lastDayNumber = new Date(year, month, 0).getDate();
-  const lastDay = `${year}-${String(month).padStart(2, "0")}-${String(
-    lastDayNumber
-  ).padStart(2, "0")}`;
+  const lastDay = `${year}-${String(month).padStart(2, "0")}-${String(lastDayNumber).padStart(2, "0")}`;
 
   const url =
     `https://v3.football.api-sports.io/fixtures` +
@@ -305,9 +272,7 @@ export async function importMatchesForMonth(formData: FormData) {
     `&to=${lastDay}`;
 
   const response = await fetch(url, {
-    headers: {
-      "x-apisports-key": apiKey,
-    },
+    headers: { "x-apisports-key": apiKey },
     cache: "no-store",
   });
 
@@ -322,20 +287,17 @@ export async function importMatchesForMonth(formData: FormData) {
   }
 
   const fixtures = apiData.response ?? [];
+  const syncedAt = new Date().toISOString();
 
   for (const item of fixtures) {
     const fixtureId = item.fixture?.id;
 
-    if (!fixtureId) {
-      continue;
-    }
+    if (!fixtureId) continue;
 
     const homeTeam = item.teams?.home;
     const awayTeam = item.teams?.away;
 
-    if (!homeTeam || !awayTeam) {
-      continue;
-    }
+    if (!homeTeam || !awayTeam) continue;
 
     const fcsgIsHome = Number(homeTeam.id) === FCSG_TEAM_ID;
     const opponentApiTeam = fcsgIsHome ? awayTeam : homeTeam;
@@ -386,13 +348,12 @@ export async function importMatchesForMonth(formData: FormData) {
       live_extra: item.fixture?.status?.extra ?? null,
       live_home_score: homeGoals ?? null,
       live_away_score: awayGoals ?? null,
+      api_last_synced_at: syncedAt,
     };
 
     const { error: upsertError } = await supabase
       .from("matches")
-      .upsert(matchData, {
-        onConflict: "api_fixture_id",
-      });
+      .upsert(matchData, { onConflict: "api_fixture_id" });
 
     if (upsertError) {
       throw new Error(
@@ -436,18 +397,12 @@ export async function syncMatchWithApi(formData: FormData) {
   }
 
   const fixtureId = match.api_fixture_id;
-  const headers = {
-    "x-apisports-key": apiKey,
-  };
+  const headers = { "x-apisports-key": apiKey };
 
   const fixtureResponse = await fetch(
     `https://v3.football.api-sports.io/fixtures?id=${fixtureId}`,
-    {
-      headers,
-      cache: "no-store",
-    }
+    { headers, cache: "no-store" }
   );
-
   const fixtureData = await fixtureResponse.json();
 
   if (
@@ -463,52 +418,39 @@ export async function syncMatchWithApi(formData: FormData) {
     throw new Error("Keine Spieldaten von API-Football erhalten.");
   }
 
-  const eventsResponse = await fetch(
-    `https://v3.football.api-sports.io/fixtures/events?fixture=${fixtureId}`,
-    {
+  const [eventsResponse, lineupsResponse, statisticsResponse] = await Promise.all([
+    fetch(`https://v3.football.api-sports.io/fixtures/events?fixture=${fixtureId}`, {
       headers,
       cache: "no-store",
-    }
-  );
-  const eventsData = await eventsResponse.json();
+    }),
+    fetch(`https://v3.football.api-sports.io/fixtures/lineups?fixture=${fixtureId}`, {
+      headers,
+      cache: "no-store",
+    }),
+    fetch(`https://v3.football.api-sports.io/fixtures/statistics?fixture=${fixtureId}`, {
+      headers,
+      cache: "no-store",
+    }),
+  ]);
+
+  const [eventsData, lineupsData, statisticsData] = await Promise.all([
+    eventsResponse.json(),
+    lineupsResponse.json(),
+    statisticsResponse.json(),
+  ]);
 
   if (eventsData.errors && Object.keys(eventsData.errors).length > 0) {
     throw new Error(`Events-API: ${JSON.stringify(eventsData.errors)}`);
   }
-
-  const events = Array.isArray(eventsData.response) ? eventsData.response : [];
-
-  const lineupsResponse = await fetch(
-    `https://v3.football.api-sports.io/fixtures/lineups?fixture=${fixtureId}`,
-    {
-      headers,
-      cache: "no-store",
-    }
-  );
-  const lineupsData = await lineupsResponse.json();
-
   if (lineupsData.errors && Object.keys(lineupsData.errors).length > 0) {
     throw new Error(`Lineups-API: ${JSON.stringify(lineupsData.errors)}`);
   }
-
-  const lineups = Array.isArray(lineupsData.response) ? lineupsData.response : [];
-
-  const statisticsResponse = await fetch(
-    `https://v3.football.api-sports.io/fixtures/statistics?fixture=${fixtureId}`,
-    {
-      headers,
-      cache: "no-store",
-    }
-  );
-  const statisticsData = await statisticsResponse.json();
-
-  if (
-    statisticsData.errors &&
-    Object.keys(statisticsData.errors).length > 0
-  ) {
+  if (statisticsData.errors && Object.keys(statisticsData.errors).length > 0) {
     throw new Error(`Statistics-API: ${JSON.stringify(statisticsData.errors)}`);
   }
 
+  const events = Array.isArray(eventsData.response) ? eventsData.response : [];
+  const lineups = Array.isArray(lineupsData.response) ? lineupsData.response : [];
   const statistics = Array.isArray(statisticsData.response)
     ? statisticsData.response
     : [];
@@ -520,19 +462,29 @@ export async function syncMatchWithApi(formData: FormData) {
   const awayScore = fixture.goals?.away ?? null;
   const isFinished = status !== null && ["FT", "AET", "PEN"].includes(status);
 
-  const updateData: {
-    live_status: string | null;
-    live_minute: number | null;
-    live_extra: number | null;
-    live_home_score: number | null;
-    live_away_score: number | null;
-    live_events: unknown[];
-    live_lineups: unknown[];
-    live_statistics: unknown[];
-    finished?: boolean;
-    fcsg_score?: number | null;
-    opponent_score?: number | null;
-  } = {
+  const homeTeam = fixture.teams?.home;
+  const awayTeam = fixture.teams?.away;
+  const hasTeams = Boolean(homeTeam && awayTeam);
+  const fcsgIsHome = hasTeams
+    ? Number(homeTeam.id) === FCSG_TEAM_ID
+    : match.is_home;
+  const opponentApiTeam = hasTeams ? (fcsgIsHome ? awayTeam : homeTeam) : null;
+
+  let opponentName: string | undefined;
+  let opponentLogo: string | null | undefined;
+
+  if (opponentApiTeam?.name) {
+    const { data: localTeam } = await supabase
+      .from("teams")
+      .select("name, logo_path")
+      .ilike("name", opponentApiTeam.name)
+      .maybeSingle();
+
+    opponentName = localTeam?.name ?? opponentApiTeam.name;
+    opponentLogo = localTeam?.logo_path ?? null;
+  }
+
+  const updateData: Record<string, unknown> = {
     live_status: status,
     live_minute: elapsed,
     live_extra: extra,
@@ -541,12 +493,26 @@ export async function syncMatchWithApi(formData: FormData) {
     live_events: events,
     live_lineups: lineups,
     live_statistics: statistics,
+    api_last_synced_at: new Date().toISOString(),
   };
+
+  // Offizielle API-Daten haben bei API-Spielen Vorrang. Dadurch werden auch
+  // Verschiebungen und neu angesetzte Termine automatisch übernommen.
+  if (fixture.fixture?.date) {
+    updateData.kickoff = fixture.fixture.date;
+  }
+  if (hasTeams) {
+    updateData.is_home = fcsgIsHome;
+  }
+  if (opponentName) {
+    updateData.opponent = opponentName;
+    updateData.opponent_logo = opponentLogo ?? null;
+  }
 
   if (isFinished && homeScore !== null && awayScore !== null) {
     updateData.finished = true;
 
-    if (match.is_home) {
+    if (fcsgIsHome) {
       updateData.fcsg_score = homeScore;
       updateData.opponent_score = awayScore;
     } else {

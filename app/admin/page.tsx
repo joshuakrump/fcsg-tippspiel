@@ -17,6 +17,50 @@ import {
 
 import { DeleteMatchButton } from "@/components/delete-match-button";
 import { AdminNavigation } from "@/components/admin-navigation";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
+
+const STATUS_INFO: Record<
+  string,
+  { label: string; badge: string; icon: string }
+> = {
+  NS: { label: "Geplant", badge: "bg-slate-100 text-slate-700", icon: "📅" },
+  TBD: { label: "Termin offen", badge: "bg-amber-100 text-amber-800", icon: "⏳" },
+  PST: { label: "Verschoben", badge: "bg-orange-100 text-orange-800", icon: "⚠️" },
+  CANC: { label: "Abgesagt", badge: "bg-red-100 text-red-800", icon: "❌" },
+  ABD: { label: "Abgebrochen", badge: "bg-red-100 text-red-800", icon: "⛔" },
+  SUSP: { label: "Unterbrochen", badge: "bg-amber-100 text-amber-800", icon: "⏸️" },
+  INT: { label: "Unterbrochen", badge: "bg-amber-100 text-amber-800", icon: "⏸️" },
+  FT: { label: "Beendet", badge: "bg-green-100 text-green-800", icon: "✅" },
+  AET: { label: "Beendet n. V.", badge: "bg-green-100 text-green-800", icon: "✅" },
+  PEN: { label: "Beendet n. P.", badge: "bg-green-100 text-green-800", icon: "✅" },
+  HT: { label: "Halbzeit", badge: "bg-red-100 text-red-800", icon: "🔴" },
+  "1H": { label: "Live · 1. Halbzeit", badge: "bg-red-100 text-red-800", icon: "🔴" },
+  "2H": { label: "Live · 2. Halbzeit", badge: "bg-red-100 text-red-800", icon: "🔴" },
+  ET: { label: "Live · Verlängerung", badge: "bg-red-100 text-red-800", icon: "🔴" },
+  P: { label: "Live · Penaltyschiessen", badge: "bg-red-100 text-red-800", icon: "🔴" },
+};
+
+function getStatusInfo(status: string | null) {
+  if (!status) {
+    return { label: "Kein API-Status", badge: "bg-slate-100 text-slate-600", icon: "○" };
+  }
+
+  return (
+    STATUS_INFO[status] ?? {
+      label: status,
+      badge: "bg-purple-100 text-purple-800",
+      icon: "ℹ️",
+    }
+  );
+}
+
+function formatKickoff(kickoff: string) {
+  return formatInTimeZone(
+    new Date(kickoff),
+    "Europe/Zurich",
+    "dd.MM.yyyy · HH:mm"
+  );
+}
 
 async function AdminContent() {
   const admin = await isAdmin();
@@ -27,7 +71,6 @@ async function AdminContent() {
 
   const supabase = createAdminClient();
 
-  // Teams laden
   const { data: teams, error: teamsError } = await supabase
     .from("teams")
     .select("id, name, short_name, logo_path")
@@ -42,7 +85,6 @@ async function AdminContent() {
     );
   }
 
-  // Spiele laden
   const { data: matches, error } = await supabase
     .from("matches")
     .select("*")
@@ -56,20 +98,19 @@ async function AdminContent() {
     );
   }
 
-  const openMatches =
-    matches?.filter((match) => !match.finished) ?? [];
+  const openMatches = matches?.filter((match) => !match.finished) ?? [];
+  const now = new Date();
+  const currentYear = formatInTimeZone(now, "Europe/Zurich", "yyyy");
+  const currentMonth = formatInTimeZone(now, "Europe/Zurich", "M");
+  const yearOptions = Array.from(
+    new Set([Number(currentYear), Number(currentYear) + 1, 2026, 2027])
+  ).sort((a, b) => a - b);
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Kopfbereich */}
       <div className="mb-10">
-        <p className="text-green-300 text-sm font-semibold">
-          FCSG TIPPSPIEL
-        </p>
-
-        <h1 className="text-4xl font-bold">
-          Admin-Bereich
-        </h1>
+        <p className="text-green-300 text-sm font-semibold">FCSG TIPPSPIEL</p>
+        <h1 className="text-4xl font-bold">Admin-Bereich</h1>
 
         <AdminNavigation />
 
@@ -82,24 +123,20 @@ async function AdminContent() {
           </a>
 
           <form action={adminLogout}>
-            <button
-              type="submit"
+            <AdminSubmitButton
+              idleText="Admin abmelden"
+              pendingText="Wird abgemeldet…"
               className="bg-white text-green-900 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition"
-            >
-              Admin abmelden
-            </button>
+            />
           </form>
         </div>
       </div>
 
-      {/* Super-League Import */}
       <section className="bg-white text-black rounded-2xl p-6 mb-8">
-        <h2 className="text-2xl font-bold mb-2">
-          Super-League-Spiele importieren
-        </h2>
-
+        <h2 className="text-2xl font-bold mb-2">Super-League-Spiele importieren</h2>
         <p className="text-gray-600 mb-5">
-          Lade die FCSG-Spiele eines Monats automatisch aus API-Football.
+          Lade FCSG-Spiele eines Monats aus API-Football. Bereits importierte
+          Spiele werden dabei mit den aktuellen offiziellen Daten aktualisiert.
         </p>
 
         <form
@@ -107,36 +144,31 @@ async function AdminContent() {
           className="grid sm:grid-cols-[1fr_1fr_auto] gap-4 items-end"
         >
           <div>
-            <label
-              htmlFor="year"
-              className="block font-semibold mb-2"
-            >
+            <label htmlFor="year" className="block font-semibold mb-2">
               Jahr
             </label>
-
             <select
               id="year"
               name="year"
-              defaultValue="2026"
+              defaultValue={currentYear}
               className="w-full border rounded-lg p-3"
             >
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
+              {yearOptions.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
-            <label
-              htmlFor="month"
-              className="block font-semibold mb-2"
-            >
+            <label htmlFor="month" className="block font-semibold mb-2">
               Monat
             </label>
-
             <select
               id="month"
               name="month"
-              defaultValue="8"
+              defaultValue={currentMonth}
               className="w-full border rounded-lg p-3"
             >
               <option value="1">Januar</option>
@@ -154,343 +186,336 @@ async function AdminContent() {
             </select>
           </div>
 
-          <button
-            type="submit"
+          <AdminSubmitButton
+            idleText="Spiele importieren"
+            pendingText="⏳ Import läuft…"
             className="bg-green-700 hover:bg-green-800 text-white px-5 py-3 rounded-lg font-bold"
-          >
-            Spiele importieren
-          </button>
+          />
         </form>
       </section>
 
-      {/* Neues Spiel */}
-      <section className="bg-white text-black rounded-2xl p-6 mb-8">
-        <h2 className="text-2xl font-bold mb-5">
-          Neues Spiel
-        </h2>
-
-        <form action={createMatch} className="space-y-5">
+      <details className="bg-white text-black rounded-2xl mb-8 overflow-hidden group">
+        <summary className="cursor-pointer list-none p-6 flex items-center justify-between gap-4 hover:bg-gray-50 transition">
           <div>
-            <label
-              htmlFor="teamId"
-              className="block font-semibold mb-2"
-            >
-              Gegner
-            </label>
+            <h2 className="text-2xl font-bold">Manuell ein Spiel hinzufügen</h2>
+            <p className="text-gray-500 text-sm mt-1">
+              Nur nötig, wenn ein Spiel nicht über API-Football importiert wird.
+            </p>
+          </div>
+          <span className="text-2xl font-bold group-open:rotate-45 transition-transform">
+            +
+          </span>
+        </summary>
 
-            <select
-              id="teamId"
-              name="teamId"
-              required
-              defaultValue=""
-              className="w-full border rounded-lg p-3"
-            >
-              <option value="" disabled>
-                Gegner auswählen...
-              </option>
-
-              {teams?.map((team) => (
-                <option
-                  key={team.id}
-                  value={team.id}
-                >
-                  {team.name}
+        <div className="px-6 pb-6 border-t pt-5">
+          <form action={createMatch} className="space-y-5">
+            <div>
+              <label htmlFor="teamId" className="block font-semibold mb-2">
+                Gegner
+              </label>
+              <select
+                id="teamId"
+                name="teamId"
+                required
+                defaultValue=""
+                className="w-full border rounded-lg p-3"
+              >
+                <option value="" disabled>
+                  Gegner auswählen...
                 </option>
-              ))}
-            </select>
-          </div>
+                {teams?.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label
-              htmlFor="kickoff"
-              className="block font-semibold mb-2"
-            >
-              Anpfiff
-            </label>
+            <div>
+              <label htmlFor="kickoff" className="block font-semibold mb-2">
+                Anpfiff
+              </label>
+              <input
+                id="kickoff"
+                name="kickoff"
+                type="datetime-local"
+                required
+                className="w-full border rounded-lg p-3"
+              />
+            </div>
 
-            <input
-              id="kickoff"
-              name="kickoff"
-              type="datetime-local"
-              required
-              className="w-full border rounded-lg p-3"
+            <div>
+              <label htmlFor="location" className="block font-semibold mb-2">
+                Spielort
+              </label>
+              <select
+                id="location"
+                name="location"
+                className="w-full border rounded-lg p-3"
+                defaultValue="home"
+              >
+                <option value="home">Heimspiel</option>
+                <option value="away">Auswärtsspiel</option>
+              </select>
+            </div>
+
+            <AdminSubmitButton
+              idleText="Spiel hinzufügen"
+              pendingText="⏳ Spiel wird hinzugefügt…"
+              className="bg-green-700 hover:bg-green-800 text-white px-5 py-3 rounded-lg font-bold"
             />
-          </div>
+          </form>
+        </div>
+      </details>
 
-          <div>
-            <label
-              htmlFor="location"
-              className="block font-semibold mb-2"
-            >
-              Spielort
-            </label>
-
-            <select
-              id="location"
-              name="location"
-              className="w-full border rounded-lg p-3"
-              defaultValue="home"
-            >
-              <option value="home">
-                Heimspiel
-              </option>
-
-              <option value="away">
-                Auswärtsspiel
-              </option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="bg-green-700 text-white px-5 py-3 rounded-lg font-bold"
-          >
-            Spiel hinzufügen
-          </button>
-        </form>
-      </section>
-
-      {/* Offene Spiele */}
       <section className="bg-white text-black rounded-2xl p-6">
-        <h2 className="text-2xl font-bold mb-5">
-          Offene Spiele
-        </h2>
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
+          <div>
+            <h2 className="text-2xl font-bold">Offene Spiele</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {openMatches.length} {openMatches.length === 1 ? "Spiel" : "Spiele"} offen
+            </p>
+          </div>
+          <p className="text-xs text-gray-400">
+            Spiel anklicken, um Details zu bearbeiten
+          </p>
+        </div>
 
         {openMatches.length === 0 ? (
-          <p className="text-gray-500">
-            Keine offenen Spiele vorhanden.
-          </p>
+          <p className="text-gray-500">Keine offenen Spiele vorhanden.</p>
         ) : (
-          <div className="space-y-6">
-            {openMatches.map((match) => (
-              <div
-                key={match.id}
-                className="border rounded-xl p-5"
-              >
-                <p className="text-sm text-gray-500 mb-1">
-                  Spiel verwalten
-                </p>
+          <div className="space-y-4">
+            {openMatches.map((match) => {
+              const statusInfo = getStatusInfo(match.live_status);
+              const isPostponed = match.live_status === "PST";
+              const isApiMatch = Boolean(match.api_fixture_id);
 
-                <h3 className="text-xl font-bold mb-5">
-                  {match.is_home
-                    ? `FC St. Gallen – ${match.opponent}`
-                    : `${match.opponent} – FC St. Gallen`}
-                </h3>
-
-                {/* Spiel bearbeiten */}
-                <form
-                  action={updateMatch}
-                  className="space-y-4 border-b pb-5 mb-5"
+              return (
+                <details
+                  key={match.id}
+                  className={`border rounded-xl overflow-hidden group ${
+                    isPostponed ? "border-orange-300 bg-orange-50/40" : "bg-white"
+                  }`}
                 >
-                  <input
-                    type="hidden"
-                    name="matchId"
-                    value={match.id}
-                  />
-
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">
-                      Gegner
-                    </label>
-
-                   <select
-  name="opponent"
-  defaultValue={match.opponent}
-  required
-  className="w-full border rounded-lg p-2"
->
-  {teams?.map((team) => (
-    <option
-      key={team.id}
-      value={team.name}
-    >
-      {team.name}
-    </option>
-  ))}
-</select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">
-                      Anpfiff
-                    </label>
-
-                    <input
-                      name="kickoff"
-                      type="datetime-local"
-                      defaultValue={formatInTimeZone(
-                        new Date(match.kickoff),
-                        "Europe/Zurich",
-                        "yyyy-MM-dd'T'HH:mm"
-                      )}
-                      required
-                      className="w-full border rounded-lg p-2"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">
-                      Spielort
-                    </label>
-
-                    <select
-                      name="location"
-                      defaultValue={
-                        match.is_home ? "home" : "away"
-                      }
-                      className="w-full border rounded-lg p-2"
-                    >
-                      <option value="home">
-                        Heimspiel
-                      </option>
-
-                      <option value="away">
-                        Auswärtsspiel
-                      </option>
-                    </select>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="bg-blue-700 text-white px-4 py-2 rounded-lg font-bold"
-                  >
-                    Änderungen speichern
-                  </button>
-                </form>
-
-                {/* LIVE API */}
-                <div className="border-b pb-5 mb-5">
-                  <h4 className="font-bold mb-3">
-                    Live-Daten
-                  </h4>
-
-                  {match.api_fixture_id ? (
-                    <>
-                      <form action={syncMatchWithApi}>
-                        <input
-                          type="hidden"
-                          name="matchId"
-                          value={match.id}
-                        />
-
-                        <button
-                          type="submit"
-                          className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-lg font-bold"
-                        >
-                          🔄 Mit Live-API synchronisieren
-                        </button>
-                      </form>
-
-                      {/* Aktuelle API-Daten */}
-                      {match.live_status && (
-                        <div className="mt-4 bg-purple-50 border border-purple-100 rounded-xl p-4">
-                          <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
-                            <p>
-                              Status:{" "}
-                              <strong>
-                                {match.live_status}
-                              </strong>
-                            </p>
-
-                            {match.live_minute !== null && (
-                              <p>
-                                Minute:{" "}
-                                <strong>
-                                  {match.live_minute}
-                                  {match.live_extra
-                                    ? `+${match.live_extra}`
-                                    : ""}
-                                  '
-                                </strong>
-                              </p>
-                            )}
-
-                            {match.live_home_score !== null &&
-                              match.live_away_score !== null && (
-                                <p>
-                                  Live-Spielstand:{" "}
-                                  <strong>
-                                    {match.live_home_score} :{" "}
-                                    {match.live_away_score}
-                                  </strong>
-                                </p>
-                              )}
-                          </div>
+                  <summary className="cursor-pointer list-none p-5 hover:bg-gray-50/70 transition">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <h3 className="text-xl font-bold">
+                          {match.is_home
+                            ? `FC St. Gallen – ${match.opponent}`
+                            : `${match.opponent} – FC St. Gallen`}
+                        </h3>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 mt-2">
+                          <span>📅 {formatKickoff(match.kickoff)}</span>
+                          <span>{match.is_home ? "🏠 Heimspiel" : "🚌 Auswärtsspiel"}</span>
                         </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-gray-500">
-                      Dieses Spiel wurde nicht über API-Football importiert.
-                    </p>
-                  )}
-                </div>
+                      </div>
 
-                {/* Spiel abschliessen */}
-                <div className="mb-5">
-                  <h4 className="font-bold mb-3">
-                    Spiel manuell abschliessen
-                  </h4>
-
-                  <p className="text-sm text-gray-500 mb-3">
-                    Nur verwenden, wenn das automatische API-Ergebnis nicht
-                    korrekt übernommen wurde.
-                  </p>
-
-                  <form
-                    action={finishMatch}
-                    className="flex flex-wrap items-end gap-3"
-                  >
-                    <input
-                      type="hidden"
-                      name="matchId"
-                      value={match.id}
-                    />
-
-                    <div>
-                      <label className="block text-sm font-semibold mb-1">
-                        FCSG Tore
-                      </label>
-
-                      <input
-                        name="fcsgScore"
-                        type="number"
-                        min="0"
-                        required
-                        className="w-24 border rounded-lg p-2"
-                      />
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <span
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${statusInfo.badge}`}
+                        >
+                          {statusInfo.icon} {statusInfo.label}
+                        </span>
+                        <span
+                          className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${
+                            isApiMatch
+                              ? "bg-purple-100 text-purple-800"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {isApiMatch ? "🟣 API-Spiel" : "⚪ Manuell"}
+                        </span>
+                        <span className="text-gray-400 group-open:rotate-180 transition-transform">
+                          ▼
+                        </span>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold mb-1">
-                        Gegner Tore
-                      </label>
+                    {isPostponed && (
+                      <div className="mt-4 rounded-lg bg-orange-100 text-orange-900 px-4 py-3 text-sm font-semibold">
+                        ⚠️ Dieses Spiel wurde verschoben. Beim nächsten API-Sync wird ein neuer Termin automatisch übernommen, sobald er verfügbar ist.
+                      </div>
+                    )}
+                  </summary>
 
-                      <input
-                        name="opponentScore"
-                        type="number"
-                        min="0"
-                        required
-                        className="w-24 border rounded-lg p-2"
-                      />
+                  <div className="border-t px-5 pb-5 pt-5 bg-white">
+                    <div className="grid gap-6">
+                      <div>
+                        <h4 className="font-bold mb-3">Spiel bearbeiten</h4>
+
+                        {isApiMatch && (
+                          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                            <strong>Hinweis:</strong> Manuelle Änderungen an Gegner, Datum oder Spielort werden bei der nächsten API-Synchronisation wieder durch die offiziellen API-Daten ersetzt.
+                          </div>
+                        )}
+
+                        <form action={updateMatch} className="space-y-4">
+                          <input type="hidden" name="matchId" value={match.id} />
+
+                          <div>
+                            <label className="block text-sm font-semibold mb-1">Gegner</label>
+                            <select
+                              name="opponent"
+                              defaultValue={match.opponent}
+                              required
+                              className="w-full border rounded-lg p-2"
+                            >
+                              {teams?.map((team) => (
+                                <option key={team.id} value={team.name}>
+                                  {team.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold mb-1">Anpfiff</label>
+                            <input
+                              name="kickoff"
+                              type="datetime-local"
+                              defaultValue={formatInTimeZone(
+                                new Date(match.kickoff),
+                                "Europe/Zurich",
+                                "yyyy-MM-dd'T'HH:mm"
+                              )}
+                              required
+                              className="w-full border rounded-lg p-2"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold mb-1">Spielort</label>
+                            <select
+                              name="location"
+                              defaultValue={match.is_home ? "home" : "away"}
+                              className="w-full border rounded-lg p-2"
+                            >
+                              <option value="home">Heimspiel</option>
+                              <option value="away">Auswärtsspiel</option>
+                            </select>
+                          </div>
+
+                          <AdminSubmitButton
+                            idleText="Änderungen speichern"
+                            pendingText="⏳ Wird gespeichert…"
+                            className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg font-bold"
+                          />
+                        </form>
+                      </div>
+
+                      <div className="border-t pt-5">
+                        <h4 className="font-bold mb-3">Live-Daten</h4>
+
+                        {isApiMatch ? (
+                          <>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <form action={syncMatchWithApi}>
+                                <input type="hidden" name="matchId" value={match.id} />
+                                <AdminSubmitButton
+                                  idleText="🔄 Mit Live-API synchronisieren"
+                                  pendingText="⏳ Synchronisiere…"
+                                  className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-lg font-bold"
+                                />
+                              </form>
+
+                              {match.api_last_synced_at && (
+                                <span className="text-xs text-gray-500">
+                                  ✅ Zuletzt synchronisiert: {formatInTimeZone(
+                                    new Date(match.api_last_synced_at),
+                                    "Europe/Zurich",
+                                    "dd.MM.yyyy · HH:mm:ss"
+                                  )}
+                                </span>
+                              )}
+                            </div>
+
+                            {match.live_status && (
+                              <div className="mt-4 bg-purple-50 border border-purple-100 rounded-xl p-4">
+                                <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+                                  <p>
+                                    Status: <strong>{statusInfo.icon} {statusInfo.label}</strong>
+                                    <span className="text-gray-400 ml-1">({match.live_status})</span>
+                                  </p>
+
+                                  {match.live_minute !== null && (
+                                    <p>
+                                      Minute: <strong>
+                                        {match.live_minute}
+                                        {match.live_extra ? `+${match.live_extra}` : ""}'
+                                      </strong>
+                                    </p>
+                                  )}
+
+                                  {match.live_home_score !== null &&
+                                    match.live_away_score !== null && (
+                                      <p>
+                                        Live-Spielstand: <strong>
+                                          {match.live_home_score} : {match.live_away_score}
+                                        </strong>
+                                      </p>
+                                    )}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            Dieses Spiel wurde manuell erstellt und besitzt keine API-Verknüpfung.
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="border-t pt-5">
+                        <h4 className="font-bold mb-3">Spiel manuell abschliessen</h4>
+                        <p className="text-sm text-gray-500 mb-3">
+                          Nur verwenden, wenn das automatische API-Ergebnis nicht korrekt übernommen wurde.
+                        </p>
+
+                        <form action={finishMatch} className="flex flex-wrap items-end gap-3">
+                          <input type="hidden" name="matchId" value={match.id} />
+
+                          <div>
+                            <label className="block text-sm font-semibold mb-1">FCSG Tore</label>
+                            <input
+                              name="fcsgScore"
+                              type="number"
+                              min="0"
+                              required
+                              className="w-24 border rounded-lg p-2"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold mb-1">Gegner Tore</label>
+                            <input
+                              name="opponentScore"
+                              type="number"
+                              min="0"
+                              required
+                              className="w-24 border rounded-lg p-2"
+                            />
+                          </div>
+
+                          <AdminSubmitButton
+                            idleText="Spiel abschliessen"
+                            pendingText="⏳ Wird abgeschlossen…"
+                            className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg font-bold"
+                          />
+                        </form>
+                      </div>
+
+                      <div className="border-t pt-5">
+                        <DeleteMatchButton
+                          matchId={match.id}
+                          deleteAction={deleteMatch}
+                        />
+                      </div>
                     </div>
-
-                    <button
-                      type="submit"
-                      className="bg-green-700 text-white px-4 py-2 rounded-lg font-bold"
-                    >
-                      Spiel abschliessen
-                    </button>
-                  </form>
-                </div>
-
-                {/* Löschen */}
-                <DeleteMatchButton
-                  matchId={match.id}
-                  deleteAction={deleteMatch}
-                />
-              </div>
-            ))}
+                  </div>
+                </details>
+              );
+            })}
           </div>
         )}
       </section>
@@ -500,7 +525,7 @@ async function AdminContent() {
 
 export default function AdminPage() {
   return (
-    <main className="min-h-screen bg-green-950 text-white p-8">
+    <main className="min-h-screen bg-green-950 text-white p-4 sm:p-8">
       <Suspense fallback={<p>Admin wird geladen...</p>}>
         <AdminContent />
       </Suspense>

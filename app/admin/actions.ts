@@ -363,6 +363,7 @@ export async function importMatchesForMonth(formData: FormData) {
   }
 
   revalidateGamePages();
+  redirect(`/admin?import=success&count=${fixtures.length}&month=${month}&year=${year}`);
 }
 
 export async function syncMatchWithApi(formData: FormData) {
@@ -496,8 +497,6 @@ export async function syncMatchWithApi(formData: FormData) {
     api_last_synced_at: new Date().toISOString(),
   };
 
-  // Offizielle API-Daten haben bei API-Spielen Vorrang. Dadurch werden auch
-  // Verschiebungen und neu angesetzte Termine automatisch übernommen.
   if (fixture.fixture?.date) {
     updateData.kickoff = fixture.fixture.date;
   }

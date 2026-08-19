@@ -36,37 +36,30 @@ async function ResultsList() {
       {matches.map((match) => (
         <article
           key={match.id}
-          className="
-            bg-white
-            text-black
-            rounded-3xl
-            p-5 sm:p-7
-            shadow-2xl
-            border border-gray-200
-          "
+          className="bg-white text-black rounded-3xl p-5 sm:p-7 shadow-2xl border border-gray-200"
         >
           <div className="mb-1">
-            <div
-              className="
-                inline-flex
-                items-center
-                bg-gray-100
-                text-gray-500
-                rounded-full
-                px-3 py-1
-                text-xs
-                font-semibold
-                mb-3
-              "
-            >
-              {new Date(match.kickoff).toLocaleString("de-CH", {
-                timeZone: "Europe/Zurich",
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="inline-flex items-center bg-gray-100 text-gray-500 rounded-full px-3 py-1 text-xs font-semibold">
+                {new Date(match.kickoff).toLocaleString("de-CH", {
+                  timeZone: "Europe/Zurich",
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+
+              {match.competition_name && (
+                <span className="inline-flex items-center gap-2 bg-green-50 text-green-800 rounded-full px-3 py-1 text-xs font-bold">
+                  {match.competition_logo && (
+                    <img src={match.competition_logo} alt="" className="w-4 h-4 object-contain" />
+                  )}
+                  {match.competition_name}
+                  {match.competition_round ? ` · ${match.competition_round}` : ""}
+                </span>
+              )}
             </div>
 
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
@@ -107,20 +100,12 @@ async function ResultsList() {
   );
 }
 
-  export default function ErgebnissePage() {
+export default function ErgebnissePage() {
   return (
     <AppShell>
-      <AppHeader subtitle="Alle abgeschlossenen Spiele" />
-
+      <AppHeader subtitle="Alle abgeschlossenen FCSG-Spiele" />
       <Navigation />
-
-      <Suspense
-        fallback={
-          <p className="text-green-200">
-            Ergebnisse werden geladen...
-          </p>
-        }
-      >
+      <Suspense fallback={<p className="text-green-200">Ergebnisse werden geladen...</p>}>
         <ResultsList />
       </Suspense>
     </AppShell>

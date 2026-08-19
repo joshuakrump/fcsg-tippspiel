@@ -14,6 +14,7 @@ import {
   importMatchesForMonth,
   syncMatchWithApi,
 } from "./actions";
+import { syncFinishedMatchDetails } from "./match-detail-actions";
 
 import { DeleteMatchButton } from "@/components/delete-match-button";
 import { AdminNavigation } from "@/components/admin-navigation";
@@ -82,6 +83,10 @@ type ImportResult = {
   count?: string;
   month?: string;
   year?: string;
+  details?: string;
+  checked?: string;
+  updated?: string;
+  unavailable?: string;
 };
 
 async function AdminContent({ importResult }: { importResult: ImportResult }) {
@@ -154,6 +159,9 @@ async function AdminContent({ importResult }: { importResult: ImportResult }) {
       ? MONTH_NAMES[importMonthNumber - 1]
       : "Monat";
   const importCount = Number(importResult.count || 0);
+  const detailsChecked = Number(importResult.checked || 0);
+  const detailsUpdated = Number(importResult.updated || 0);
+  const detailsUnavailable = Number(importResult.unavailable || 0);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -191,11 +199,24 @@ async function AdminContent({ importResult }: { importResult: ImportResult }) {
         </div>
       )}
 
+      {importResult.details === "success" && (
+        <div className="mb-8 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 text-blue-950 shadow-sm">
+          <p className="font-bold text-lg">🔄 Matchdetails synchronisiert</p>
+          <p className="mt-1 text-sm">
+            {detailsChecked} abgeschlossene API-Spiele geprüft. Für {detailsUpdated}{" "}
+            {detailsUpdated === 1 ? "Spiel wurden" : "Spiele wurden"} Detaildaten gefunden.
+            {detailsUnavailable > 0 && (
+              <> Für {detailsUnavailable} {detailsUnavailable === 1 ? "Spiel liefert" : "Spiele liefert"} die API aktuell keine Detaildaten.</>
+            )}
+          </p>
+        </div>
+      )}
+
       <section className="bg-white text-black rounded-2xl p-6 mb-8">
-        <h2 className="text-2xl font-bold mb-2">Super-League-Spiele importieren</h2>
+        <h2 className="text-2xl font-bold mb-2">FCSG-Spiele importieren</h2>
         <p className="text-gray-600 mb-5">
-          Lade FCSG-Spiele eines Monats aus API-Football. Bereits importierte
-          Spiele werden dabei mit den aktuellen offiziellen Daten aktualisiert.
+          Lade alle bekannten FCSG-Spiele eines Monats aus API-Football – unabhängig vom Wettbewerb.
+          Bereits importierte Spiele werden dabei mit den aktuellen offiziellen Daten aktualisiert.
         </p>
 
         <form
@@ -242,6 +263,21 @@ async function AdminContent({ importResult }: { importResult: ImportResult }) {
             idleText="Spiele importieren"
             pendingText="⏳ Import läuft…"
             className="bg-green-700 hover:bg-green-800 text-white px-5 py-3 rounded-lg font-bold"
+          />
+        </form>
+      </section>
+
+      <section className="bg-white text-black rounded-2xl p-6 mb-8">
+        <h2 className="text-2xl font-bold mb-2">Matchdetails nachladen</h2>
+        <p className="text-gray-600 mb-5">
+          Prüft alle abgeschlossenen API-Spiele nochmals auf Ereignisse, Aufstellungen und Statistiken.
+          Das ist besonders nach dem Import älterer Cup- oder Europaspiele hilfreich.
+        </p>
+        <form action={syncFinishedMatchDetails}>
+          <AdminSubmitButton
+            idleText="🔄 Matchdetails aller abgeschlossenen Spiele synchronisieren"
+            pendingText="⏳ Matchdetails werden synchronisiert…"
+            className="bg-purple-700 hover:bg-purple-800 text-white px-5 py-3 rounded-lg font-bold"
           />
         </form>
       </section>

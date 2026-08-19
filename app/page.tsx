@@ -107,7 +107,7 @@ function MatchHeader({ match, next }: { match: any; next?: boolean }) {
   );
 }
 
-function PostponedMatchNotice({ match }: { match: any }) {
+function PostponedMatchNotice() {
   return (
     <div className="mt-6 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-5 text-orange-950">
       <div className="flex items-start gap-3">
@@ -129,7 +129,7 @@ function PostponedMatchNotice({ match }: { match: any }) {
 
 function MatchContent({ match }: { match: any }) {
   if (match.live_status === "PST") {
-    return <PostponedMatchNotice match={match} />;
+    return <PostponedMatchNotice />;
   }
 
   return (
@@ -177,14 +177,15 @@ async function MatchList() {
     );
   }
 
-  const upcomingMatches = matches?.filter((match) => !match.finished).slice(0, 2) ?? [];
+  const openMatches = matches?.filter((match) => !match.finished) ?? [];
+  const upcomingMatches = openMatches.filter((match) => match.live_status !== "PST").slice(0, 2);
+  const postponedMatches = openMatches.filter((match) => match.live_status === "PST");
   const finishedMatches = matches?.filter((match) => match.finished) ?? [];
   const lastFinishedMatch = finishedMatches.length > 0 ? finishedMatches[finishedMatches.length - 1] : null;
-  const nextPlayableMatch = upcomingMatches.find((match) => match.live_status !== "PST") ?? null;
+  const nextPlayableMatch = upcomingMatches[0] ?? null;
   const nextKickoff = nextPlayableMatch?.kickoff ?? null;
   const now = new Date();
   const hasLiveMatch = upcomingMatches.some((match) => {
-    if (match.live_status === "PST") return false;
     const differenceMs = now.getTime() - new Date(match.kickoff).getTime();
     return differenceMs >= 0 && differenceMs <= 3 * 60 * 60 * 1000 && !match.finished;
   });
@@ -209,11 +210,7 @@ async function MatchList() {
               <article
                 key={match.id}
                 className={`bg-white text-black rounded-3xl p-5 sm:p-7 shadow-2xl border transition ${
-                  match.live_status === "PST"
-                    ? "border-orange-300"
-                    : match.id === nextPlayableMatch?.id
-                      ? "border-green-400/80"
-                      : "border-gray-200"
+                  match.id === nextPlayableMatch?.id ? "border-green-400/80" : "border-gray-200"
                 }`}
               >
                 <MatchHeader match={match} next={match.id === nextPlayableMatch?.id} />
@@ -223,6 +220,29 @@ async function MatchList() {
           </div>
         )}
       </section>
+
+      {postponedMatches.length > 0 && (
+        <section>
+          <div className="mb-5">
+            <h2 className="text-xl sm:text-2xl font-black text-white">Verschobene Spiele</h2>
+            <p className="text-orange-200 text-sm mt-1">
+              Diese Spiele bleiben sichtbar, blockieren aber keinen Platz für die nächsten tippbaren Partien.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {postponedMatches.map((match) => (
+              <article
+                key={match.id}
+                className="bg-white text-black rounded-3xl p-5 sm:p-7 shadow-2xl border border-orange-300"
+              >
+                <MatchHeader match={match} />
+                <MatchContent match={match} />
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section>
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5">

@@ -25,23 +25,16 @@ function revalidateGamePages() {
   revalidatePath("/admin/abgeschlossen");
 }
 
-async function resolveOpponent(
-  supabase: ReturnType<typeof createAdminClient>,
+function resolveOpponent(
   apiTeam: { id?: number; name?: string; logo?: string | null } | null | undefined
 ) {
   if (!apiTeam?.name) {
     return { name: "Unbekannter Gegner", logo: null };
   }
 
-  const { data: localTeam } = await supabase
-    .from("teams")
-    .select("name, logo_path")
-    .ilike("name", apiTeam.name)
-    .maybeSingle();
-
   return {
-    name: localTeam?.name ?? apiTeam.name,
-    logo: localTeam?.logo_path ?? apiTeam.logo ?? null,
+    name: apiTeam.name,
+    logo: apiTeam.logo ?? null,
   };
 }
 
@@ -224,7 +217,6 @@ export async function importMatchesForMonth(formData: FormData) {
   const lastDayNumber = new Date(year, month, 0).getDate();
   const lastDay = `${year}-${String(month).padStart(2, "0")}-${String(lastDayNumber).padStart(2, "0")}`;
 
-  // Kein league-Filter: alle FCSG-Spiele dieser Saison und dieses Zeitraums.
   const url =
     `https://v3.football.api-sports.io/fixtures` +
     `?team=${FCSG_TEAM_ID}` +
@@ -261,7 +253,7 @@ export async function importMatchesForMonth(formData: FormData) {
     if (!fcsgIsHome && !fcsgIsAway) continue;
 
     const opponentApiTeam = fcsgIsHome ? awayTeam : homeTeam;
-    const opponent = await resolveOpponent(supabase, opponentApiTeam);
+    const opponent = resolveOpponent(opponentApiTeam);
     const status = item.fixture?.status?.short ?? "NS";
     const isFinished = FINISHED_STATUSES.includes(status);
     const homeGoals = item.goals?.home ?? null;
@@ -377,7 +369,7 @@ export async function syncMatchWithApi(formData: FormData) {
   const hasTeams = Boolean(homeTeam && awayTeam);
   const fcsgIsHome = hasTeams ? Number(homeTeam.id) === FCSG_TEAM_ID : match.is_home;
   const opponentApiTeam = hasTeams ? (fcsgIsHome ? awayTeam : homeTeam) : null;
-  const opponent = opponentApiTeam ? await resolveOpponent(supabase, opponentApiTeam) : null;
+  const opponent = opponentApiTeam ? resolveOpponent(opponentApiTeam) : null;
   const isFinished = status !== null && FINISHED_STATUSES.includes(status);
 
   const updateData: Record<string, unknown> = {

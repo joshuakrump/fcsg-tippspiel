@@ -219,15 +219,16 @@ export async function importMatchesForMonth(formData: FormData) {
     throw new Error("Ungültiger Monat.");
   }
 
+  const season = month >= 7 ? year : year - 1;
   const firstDay = `${year}-${String(month).padStart(2, "0")}-01`;
   const lastDayNumber = new Date(year, month, 0).getDate();
   const lastDay = `${year}-${String(month).padStart(2, "0")}-${String(lastDayNumber).padStart(2, "0")}`;
 
-  // Absichtlich KEIN league-Filter: Wir importieren sämtliche Pflichtspiele,
-  // die API-Football für den FC St. Gallen in diesem Zeitraum kennt.
+  // Kein league-Filter: alle FCSG-Spiele dieser Saison und dieses Zeitraums.
   const url =
     `https://v3.football.api-sports.io/fixtures` +
     `?team=${FCSG_TEAM_ID}` +
+    `&season=${season}` +
     `&from=${firstDay}` +
     `&to=${lastDay}`;
 

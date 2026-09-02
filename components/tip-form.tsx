@@ -403,15 +403,8 @@ export function TipForm({
       ? opponentLogo
       : "/logos/fcsg.svg";
 
-  const liveScoreLeft =
-    isHome
-      ? liveHomeScore
-      : liveAwayScore;
-
-  const liveScoreRight =
-    isHome
-      ? liveAwayScore
-      : liveHomeScore;
+  const liveScoreLeft = liveHomeScore;
+  const liveScoreRight = liveAwayScore;
 
   const allEvents =
     (liveEvents ?? []) as MatchEvent[];

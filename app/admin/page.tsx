@@ -387,6 +387,7 @@ async function AdminContent({ importResult }: { importResult: ImportResult }) {
                     const statusInfo = getStatusInfo(match.live_status);
                     const isPostponed = match.live_status === "PST";
                     const isApiMatch = Boolean(match.api_fixture_id);
+                    const opponentSelectId = `opponent-${match.id}`;
 
                     return (
                       <details
@@ -448,14 +449,22 @@ async function AdminContent({ importResult }: { importResult: ImportResult }) {
                                 </div>
                               )}
 
-                              <form action={updateMatch} className="space-y-4">
+                              <form
+                                key={`edit-${match.id}-${match.opponent}`}
+                                action={updateMatch}
+                                autoComplete="off"
+                                className="space-y-4"
+                              >
                                 <input type="hidden" name="matchId" value={match.id} />
 
                                 <div>
-                                  <label className="block text-sm font-semibold mb-1">Gegner</label>
+                                  <label htmlFor={opponentSelectId} className="block text-sm font-semibold mb-1">Gegner</label>
                                   <select
+                                    key={`${match.id}-${match.opponent}`}
+                                    id={opponentSelectId}
                                     name="opponent"
                                     defaultValue={match.opponent}
+                                    autoComplete="off"
                                     required
                                     className="w-full border rounded-lg p-2"
                                   >

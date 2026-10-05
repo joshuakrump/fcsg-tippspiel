@@ -48,7 +48,7 @@ async function Ranking() {
 
   const unlockedRows = user ? await syncBadgesForUser(user.id) : [];
   const unlockedMap = new Map(unlockedRows.map((row) => [row.badge_key, row.unlocked_at]));
-  const unlockedBadges = BADGES.filter((badge) => unlockedMap.has(badge.key));
+  const unlockedCount = BADGES.filter((badge) => unlockedMap.has(badge.key)).length;
 
   return (
     <div className="space-y-6">
@@ -121,22 +121,46 @@ async function Ranking() {
           <div className="mb-5">
             <h2 className="text-2xl sm:text-3xl font-black">Deine Abzeichen</h2>
             <p className="text-gray-500 text-sm mt-1">
-              {unlockedBadges.length} von {BADGES.length} freigeschaltet
+              {unlockedCount} von {BADGES.length} freigeschaltet
             </p>
           </div>
 
-          {unlockedBadges.length === 0 ? (
-            <p className="text-gray-500">Noch kein Abzeichen freigeschaltet. Weiter tippen!</p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {unlockedBadges.map((badge) => (
-                <div key={badge.key} className="rounded-2xl bg-gray-50 border border-gray-100 p-3 text-center">
-                  <Image src={badge.image} alt={badge.name} width={180} height={180} className="w-full h-auto" />
-                  <p className="font-black mt-2">{badge.name}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {BADGES.map((badge) => {
+              const isUnlocked = unlockedMap.has(badge.key);
+
+              return (
+                <div
+                  key={badge.key}
+                  className={`rounded-2xl border p-3 text-center transition ${
+                    isUnlocked
+                      ? "bg-green-50 border-green-200 shadow-sm"
+                      : "bg-gray-50 border-gray-200"
+                  }`}
+                >
+                  <div className="relative">
+                    <Image
+                      src={badge.image}
+                      alt={badge.name}
+                      width={180}
+                      height={180}
+                      className={`w-full h-auto transition ${
+                        isUnlocked
+                          ? ""
+                          : "grayscale opacity-25 contrast-50"
+                      }`}
+                    />
+                  </div>
+                  <p className={`font-black mt-2 ${isUnlocked ? "text-black" : "text-gray-400"}`}>
+                    {badge.name}
+                  </p>
+                  <p className={`text-xs mt-1 font-semibold ${isUnlocked ? "text-green-700" : "text-gray-400"}`}>
+                    {isUnlocked ? "Freigeschaltet" : "Noch gesperrt"}
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

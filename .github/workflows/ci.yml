@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Lint and build
+        run: npm run check
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+          SUPABASE_SECRET_KEY: sb_secret_ci_placeholder
+          ADMIN_USERNAME: ci-admin
+          ADMIN_PASSWORD: ci-only-placeholder-password
+          ADMIN_SESSION_SECRET: ci-only-placeholder-session-secret
+          API_FOOTBALL_KEY: ci-placeholder
+          CRON_SECRET: ci-only-placeholder-cron-secret
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ci-placeholder
+          VAPID_PRIVATE_KEY: ci-placeholder
+          VAPID_SUBJECT: mailto:ci@example.com

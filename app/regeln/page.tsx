@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Navigation } from "@/components/navigation";
 import { AppHeader } from "@/components/app-header";
 import { AppShell } from "@/components/app-shell";
@@ -18,58 +19,15 @@ const tipRules = [
 ];
 
 const badges = [
-  {
-    name: "Volltreffer",
-    task: "Erstes exakt richtig getipptes Resultat",
-    image: "/badges/volltreffer.webp",
-  },
-  {
-    name: "Scharfschütze",
-    task: "5 exakte Resultate richtig tippen",
-    image: "/badges/scharfschuetze.webp",
-  },
-  {
-    name: "Heisse Serie",
-    task: "Bei 3 Spielen in Folge punkten",
-    image: "/badges/heisse-serie.webp",
-  },
-  {
-    name: "Dauerbrenner",
-    task: "10 Spiele tippen",
-    image: "/badges/dauerbrenner.webp",
-  },
-  {
-    name: "Stammkurve",
-    task: "25 Spiele tippen",
-    image: "/badges/stammkurve.webp",
-  },
-  {
-    name: "Leader",
-    task: "Mindestens einmal Platz 1 der Gesamtrangliste erreichen",
-    image: "/badges/leader.webp",
-  },
-  {
-    name: "Perfekter Spieltag",
-    task: "Ein besonderes Top-Ergebnis an einem Spieltag erreichen",
-    image: "/badges/perfekter-spieltag.webp",
-  },
-  {
-    name: "Saisonfighter",
-    task: "Die Saison bis zum Schluss aktiv mittippen",
-    image: "/badges/saisonfighter.webp",
-  },
+  ["Volltreffer", "Erstes exakt richtig getipptes Resultat", "/badges/volltreffer.webp"],
+  ["Scharfschütze", "5 exakte Resultate richtig tippen", "/badges/scharfschuetze.webp"],
+  ["Heisse Serie", "Bei 3 gewerteten Spielen in Folge punkten", "/badges/heisse-serie.webp"],
+  ["Dauerbrenner", "10 Spiele tippen", "/badges/dauerbrenner.webp"],
+  ["Stammkurve", "25 Spiele tippen", "/badges/stammkurve.webp"],
+  ["Leader", "Mindestens einmal Platz 1 der Gesamtrangliste erreichen", "/badges/leader.webp"],
+  ["Perfekter Spieltag", "7 Punkte in einem Spiel holen", "/badges/perfekter-spieltag.webp"],
+  ["Saisonfighter", "Am Saisonende jedes Spiel getippt haben", "/badges/saisonfighter.webp"],
 ];
-
-function BadgeArtwork({ image, name }: { image: string; name: string }) {
-  return (
-    <img
-      src={image}
-      alt={`Abzeichen ${name}`}
-      className="w-32 h-32 sm:w-36 sm:h-36 object-contain"
-      loading="lazy"
-    />
-  );
-}
 
 export default function RegelnPage() {
   return (
@@ -88,9 +46,7 @@ export default function RegelnPage() {
             <div key={title} className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-bold">{title}</span>
-                <span className="bg-green-100 text-green-800 font-black px-3 py-1 rounded-full">
-                  {points}
-                </span>
+                <span className="bg-green-100 text-green-800 font-black px-3 py-1 rounded-full">{points}</span>
               </div>
               <p className="text-sm text-gray-500 mt-2">{text}</p>
             </div>
@@ -107,30 +63,19 @@ export default function RegelnPage() {
           </div>
         </div>
 
-        <div className="mt-5 bg-green-800 text-white rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm text-green-200 font-semibold">Maximum pro Spiel</p>
-            <p className="text-xl sm:text-2xl font-black">🏆 7 Punkte</p>
-          </div>
-          <span className="text-3xl">⚽</span>
+        <div className="mt-5 bg-green-800 text-white rounded-2xl p-4 sm:p-5">
+          <p className="text-sm text-green-200 font-semibold">Maximum pro Spiel</p>
+          <p className="text-xl sm:text-2xl font-black">7 Punkte</p>
         </div>
 
         <div className="mt-6">
           <h3 className="font-black text-lg mb-3">Beispiel</h3>
           <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5">
-            <div className="mb-4">
-              <p className="text-xs uppercase tracking-wide text-gray-500 font-bold">Endresultat</p>
-              <p className="font-black text-lg mt-1">FC Zürich 1 : 2 FC St. Gallen</p>
-            </div>
-
+            <p className="text-xs uppercase tracking-wide text-gray-500 font-bold">Endresultat</p>
+            <p className="font-black text-lg mt-1 mb-4">FC Zürich 1 : 2 FC St. Gallen</p>
             <div className="space-y-2">
-              {[
-                ["1 : 2", "7 Pkt."],
-                ["0 : 1", "3 Pkt."],
-                ["1 : 3", "2 Pkt."],
-                ["1 : 1", "1 Pkt."],
-              ].map(([tip, points]) => (
-                <div key={tip} className="flex items-center justify-between gap-4 bg-white rounded-xl px-3 py-3 border border-gray-100">
+              {[["1 : 2", "7 Pkt."], ["0 : 1", "3 Pkt."], ["1 : 3", "2 Pkt."], ["1 : 1", "1 Pkt."]].map(([tip, points]) => (
+                <div key={tip} className="flex items-center justify-between bg-white rounded-xl px-3 py-3 border border-gray-100">
                   <span>Tipp <strong>{tip}</strong></span>
                   <span className="font-black text-green-800">{points}</span>
                 </div>
@@ -145,7 +90,6 @@ export default function RegelnPage() {
           <h2 className="text-2xl sm:text-3xl font-black">Tippregeln</h2>
           <p className="text-gray-500 text-sm mt-1">Das Wichtigste rund um deine Tippabgabe</p>
         </div>
-
         <div className="space-y-3">
           {tipRules.map(([icon, text]) => (
             <div key={text} className="flex gap-4 bg-gray-50 border border-gray-100 rounded-2xl p-4">
@@ -157,24 +101,15 @@ export default function RegelnPage() {
       </section>
 
       <section className="bg-white text-black rounded-3xl p-5 sm:p-7 mb-6 shadow-2xl">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-black">Preis</h2>
-            <p className="text-gray-500 text-sm mt-1">Der Sieger der Saison gewinnt</p>
-          </div>
-          <span className="text-3xl">🎁</span>
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-black">Preis</h2>
+          <p className="text-gray-500 text-sm mt-1">Der Sieger der Saison gewinnt</p>
         </div>
-
         <div className="mt-5 bg-green-50 border border-green-200 rounded-2xl p-5">
-          <div className="flex items-start gap-4">
-            <span className="text-3xl shrink-0">🏆</span>
-            <div>
-              <p className="font-black text-lg">Nur Platz 1 erhält einen Preis</p>
-              <p className="text-gray-700 mt-2">
-                Der Gewinner bezahlt in der nächsten Saison keine Getränke im Stadion und erhält optional ein Trikot der neuen Saison nach Wahl.
-              </p>
-            </div>
-          </div>
+          <p className="font-black text-lg">Nur Platz 1 erhält einen Preis</p>
+          <p className="text-gray-700 mt-2">
+            Der Gewinner bezahlt in der nächsten Saison keine Getränke im Stadion und erhält optional ein Trikot der neuen Saison nach Wahl.
+          </p>
         </div>
       </section>
 
@@ -183,21 +118,18 @@ export default function RegelnPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-green-700 font-black">Sammlung</p>
           <h2 className="text-2xl sm:text-3xl font-black mt-1">Abzeichen</h2>
           <p className="text-gray-500 text-sm mt-2 max-w-2xl">
-            Diese Patches kannst du dir im Laufe der Saison verdienen. Die automatische Freischaltung bauen wir als nächsten Schritt ein.
+            Diese Patches werden automatisch freigeschaltet, sobald du die jeweilige Bedingung erfüllst. Verdiente Abzeichen bleiben dauerhaft in deiner Sammlung.
           </p>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {badges.map((badge) => (
-            <article
-              key={badge.name}
-              className="rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-3 sm:p-4 text-center shadow-sm"
-            >
+          {badges.map(([name, task, image]) => (
+            <article key={name} className="rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-3 sm:p-4 text-center shadow-sm">
               <div className="flex justify-center">
-                <BadgeArtwork image={badge.image} name={badge.name} />
+                <Image src={image} alt={`Abzeichen ${name}`} width={180} height={180} className="w-32 h-32 sm:w-36 sm:h-36 object-contain" />
               </div>
-              <h3 className="font-black text-base sm:text-lg mt-2">{badge.name}</h3>
-              <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed">{badge.task}</p>
+              <h3 className="font-black text-base sm:text-lg mt-2">{name}</h3>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed">{task}</p>
             </article>
           ))}
         </div>

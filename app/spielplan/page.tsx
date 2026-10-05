@@ -4,6 +4,8 @@ import { Navigation } from "@/components/navigation";
 import { AppHeader } from "@/components/app-header";
 import { AppShell } from "@/components/app-shell";
 
+const FALLBACK_TICKET_URL = "https://www.fcsg.ch/tickets";
+
 async function SpielplanContent() {
   const supabase = await createClient();
 
@@ -33,6 +35,7 @@ async function SpielplanContent() {
         const rightTeamName = match.is_home ? match.opponent : "FC St. Gallen";
         const leftTeamLogo = match.is_home ? "/logos/fcsg.svg" : match.opponent_logo;
         const rightTeamLogo = match.is_home ? match.opponent_logo : "/logos/fcsg.svg";
+        const ticketUrl = match.ticket_url || FALLBACK_TICKET_URL;
 
         return (
           <article
@@ -120,6 +123,29 @@ async function SpielplanContent() {
                 </p>
               </div>
             </div>
+
+            {match.is_home && (
+              <div className="mt-5 pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-green-900">🎟 Heimspiel-Tickets</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {match.ticket_url
+                      ? "Direkt zum Ticketverkauf für dieses Spiel"
+                      : "Zum offiziellen FCSG-Ticketshop"}
+                  </p>
+                </div>
+
+                <a
+                  href={ticketUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-black text-white hover:bg-green-800 transition"
+                >
+                  🎟 Tickets kaufen
+                  <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+            )}
           </article>
         );
       })}

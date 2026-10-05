@@ -253,11 +253,11 @@ export default function RegelnPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl sm:text-3xl font-black">
-              Preise
+              Preis
             </h2>
 
             <p className="text-gray-500 text-sm mt-1">
-              Für die besten Tipper der Saison
+              Der Sieger der Saison gewinnt
             </p>
           </div>
 
@@ -266,14 +266,22 @@ export default function RegelnPage() {
           </span>
         </div>
 
-        <div className="mt-5 bg-gray-50 border border-dashed border-gray-300 rounded-2xl p-5 text-center">
-          <p className="font-bold">
-            Preise folgen noch
-          </p>
+        <div className="mt-5 bg-green-50 border border-green-200 rounded-2xl p-5">
+          <div className="flex items-start gap-4">
+            <span className="text-3xl shrink-0">
+              🏆
+            </span>
 
-          <p className="text-gray-500 text-sm mt-1">
-            Die Belohnungen für die bestplatzierten Spieler werden noch festgelegt.
-          </p>
+            <div>
+              <p className="font-black text-lg">
+                Nur Platz 1 erhält einen Preis
+              </p>
+
+              <p className="text-gray-700 mt-2">
+                Der Gewinner bezahlt in der nächsten Saison keine Getränke im Stadion und erhält optional ein Trikot der neuen Saison nach Wahl.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </AppShell>

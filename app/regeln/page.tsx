@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Navigation } from "@/components/navigation";
 import { AppHeader } from "@/components/app-header";
 import { AppShell } from "@/components/app-shell";
@@ -18,21 +17,10 @@ const tipRules = [
   ["🏆", "Die gesammelten Punkte aller Spiele werden für die Gesamtrangliste zusammengezählt."],
 ];
 
-const badges = [
-  ["Volltreffer", "Erstes exakt richtig getipptes Resultat", "/badges/volltreffer.webp"],
-  ["Scharfschütze", "5 exakte Resultate richtig tippen", "/badges/scharfschuetze.webp"],
-  ["Heisse Serie", "Bei 3 gewerteten Spielen in Folge punkten", "/badges/heisse-serie.webp"],
-  ["Dauerbrenner", "10 Spiele tippen", "/badges/dauerbrenner.webp"],
-  ["Stammkurve", "25 Spiele tippen", "/badges/stammkurve.webp"],
-  ["Leader", "Mindestens einmal Platz 1 der Gesamtrangliste erreichen", "/badges/leader.webp"],
-  ["Perfekter Spieltag", "7 Punkte in einem Spiel holen", "/badges/perfekter-spieltag.webp"],
-  ["Saisonfighter", "Am Saisonende jedes Spiel getippt haben", "/badges/saisonfighter.webp"],
-];
-
 export default function RegelnPage() {
   return (
     <AppShell>
-      <AppHeader subtitle="Regeln, Punkte, Preise & Abzeichen" />
+      <AppHeader subtitle="Regeln, Punkte & Preise" />
       <Navigation />
 
       <section className="bg-white text-black rounded-3xl p-5 sm:p-7 mb-6 shadow-2xl">
@@ -100,7 +88,7 @@ export default function RegelnPage() {
         </div>
       </section>
 
-      <section className="bg-white text-black rounded-3xl p-5 sm:p-7 mb-6 shadow-2xl">
+      <section className="bg-white text-black rounded-3xl p-5 sm:p-7 shadow-2xl">
         <div>
           <h2 className="text-2xl sm:text-3xl font-black">Preis</h2>
           <p className="text-gray-500 text-sm mt-1">Der Sieger der Saison gewinnt</p>
@@ -110,28 +98,6 @@ export default function RegelnPage() {
           <p className="text-gray-700 mt-2">
             Der Gewinner bezahlt in der nächsten Saison keine Getränke im Stadion und erhält optional ein Trikot der neuen Saison nach Wahl.
           </p>
-        </div>
-      </section>
-
-      <section className="bg-white text-black rounded-3xl p-5 sm:p-7 shadow-2xl">
-        <div className="mb-6">
-          <p className="text-xs uppercase tracking-[0.2em] text-green-700 font-black">Sammlung</p>
-          <h2 className="text-2xl sm:text-3xl font-black mt-1">Abzeichen</h2>
-          <p className="text-gray-500 text-sm mt-2 max-w-2xl">
-            Diese Patches werden automatisch freigeschaltet, sobald du die jeweilige Bedingung erfüllst. Verdiente Abzeichen bleiben dauerhaft in deiner Sammlung.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {badges.map(([name, task, image]) => (
-            <article key={name} className="rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-3 sm:p-4 text-center shadow-sm">
-              <div className="flex justify-center">
-                <Image src={image} alt={`Abzeichen ${name}`} width={180} height={180} className="w-32 h-32 sm:w-36 sm:h-36 object-contain" />
-              </div>
-              <h3 className="font-black text-base sm:text-lg mt-2">{name}</h3>
-              <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed">{task}</p>
-            </article>
-          ))}
         </div>
       </section>
     </AppShell>

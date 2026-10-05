@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function AdminNavigation() {
   return (
-    <nav className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+    <nav className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
       <Link
         href="/admin/dashboard"
         className="bg-green-700 text-white text-center px-4 py-3 rounded-lg font-semibold hover:bg-green-600 transition"
@@ -15,6 +15,13 @@ export function AdminNavigation() {
         className="bg-white text-green-900 text-center px-4 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
       >
         Aktiv & geplant
+      </Link>
+
+      <Link
+        href="/admin/tickets"
+        className="bg-white text-green-900 text-center px-4 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
+      >
+        Tickets
       </Link>
 
       <Link

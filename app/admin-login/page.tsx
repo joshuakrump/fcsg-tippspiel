@@ -28,6 +28,12 @@ async function AdminLoginContent({
         </p>
       )}
 
+      {params.error === "rate-limit" && (
+        <p className="bg-red-100 text-red-700 rounded-lg p-3 mb-5">
+          Zu viele fehlgeschlagene Login-Versuche. Bitte versuche es in 15 Minuten erneut.
+        </p>
+      )}
+
       {params.error === "config" && (
         <p className="bg-red-100 text-red-700 rounded-lg p-3 mb-5">
           Admin-Zugang ist noch nicht korrekt konfiguriert.

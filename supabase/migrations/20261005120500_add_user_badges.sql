@@ -19,7 +19,9 @@ create table if not exists public.user_badges (
 
 alter table public.user_badges enable row level security;
 
-grant select on public.user_badges to authenticated;
+revoke all on table public.user_badges from anon;
+revoke all on table public.user_badges from authenticated;
+grant select on table public.user_badges to authenticated;
 
 create policy "Users can view their own badges"
 on public.user_badges

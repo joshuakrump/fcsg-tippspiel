@@ -28,6 +28,3 @@ on public.user_badges
 for select
 to authenticated
 using ((select auth.uid()) = user_id);
-
-create index if not exists user_badges_user_id_idx
-on public.user_badges(user_id);

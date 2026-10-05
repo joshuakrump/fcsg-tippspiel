@@ -17,63 +17,56 @@ const tipRules = [
   ["🏆", "Die gesammelten Punkte aller Spiele werden für die Gesamtrangliste zusammengezählt."],
 ];
 
-const badgeSpritePositions = [
-  "0% 0%",
-  "33.333% 0%",
-  "66.666% 0%",
-  "100% 0%",
-  "0% 100%",
-  "33.333% 100%",
-  "66.666% 100%",
-  "100% 100%",
-];
-
 const badges = [
   {
     name: "Volltreffer",
     task: "Erstes exakt richtig getipptes Resultat",
+    image: "/badges/volltreffer.webp",
   },
   {
     name: "Scharfschütze",
     task: "5 exakte Resultate richtig tippen",
+    image: "/badges/scharfschuetze.webp",
   },
   {
     name: "Heisse Serie",
     task: "Bei 3 Spielen in Folge punkten",
+    image: "/badges/heisse-serie.webp",
   },
   {
     name: "Dauerbrenner",
     task: "10 Spiele tippen",
+    image: "/badges/dauerbrenner.webp",
   },
   {
     name: "Stammkurve",
     task: "25 Spiele tippen",
+    image: "/badges/stammkurve.webp",
   },
   {
     name: "Leader",
     task: "Mindestens einmal Platz 1 der Gesamtrangliste erreichen",
+    image: "/badges/leader.webp",
   },
   {
     name: "Perfekter Spieltag",
     task: "Ein besonderes Top-Ergebnis an einem Spieltag erreichen",
+    image: "/badges/perfekter-spieltag.webp",
   },
   {
     name: "Saisonfighter",
     task: "Die Saison bis zum Schluss aktiv mittippen",
+    image: "/badges/saisonfighter.webp",
   },
 ];
 
-function BadgeArtwork({ index, name }: { index: number; name: string }) {
+function BadgeArtwork({ image, name }: { image: string; name: string }) {
   return (
-    <div
-      role="img"
-      aria-label={`Abzeichen ${name}`}
-      className="w-32 h-32 sm:w-36 sm:h-36 shrink-0 bg-no-repeat"
-      style={{
-        backgroundImage: 'url("/badges/badges-sprite.webp")',
-        backgroundSize: "400% 200%",
-        backgroundPosition: badgeSpritePositions[index],
-      }}
+    <img
+      src={image}
+      alt={`Abzeichen ${name}`}
+      className="w-32 h-32 sm:w-36 sm:h-36 object-contain"
+      loading="lazy"
     />
   );
 }
@@ -194,17 +187,17 @@ export default function RegelnPage() {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {badges.map((badge, index) => (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {badges.map((badge) => (
             <article
               key={badge.name}
-              className="rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-4 text-center shadow-sm"
+              className="rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-3 sm:p-4 text-center shadow-sm"
             >
               <div className="flex justify-center">
-                <BadgeArtwork index={index} name={badge.name} />
+                <BadgeArtwork image={badge.image} name={badge.name} />
               </div>
-              <h3 className="font-black text-lg mt-2">{badge.name}</h3>
-              <p className="text-sm text-gray-500 mt-1 leading-relaxed">{badge.task}</p>
+              <h3 className="font-black text-base sm:text-lg mt-2">{badge.name}</h3>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed">{badge.task}</p>
             </article>
           ))}
         </div>

@@ -4,36 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
-  {
-    href: "/",
-    label: "Tipps",
-    icon: "⚽",
-  },
-  {
-  href: "/spielplan",
-  label: "Spielplan",
-  icon: "🗓️",
-},
-  {
-    href: "/ergebnisse",
-    label: "Ergebnisse",
-    icon: "📅",
-  },
-  {
-    href: "/tabelle",
-    label: "Tabelle",
-    icon: "📊",
-  },
-  {
-    href: "/rangliste",
-    label: "Rangliste",
-    icon: "🏆",
-  },
-  {
-    href: "/regeln",
-    label: "Regeln",
-    icon: "📋",
-  },
+  { href: "/", label: "Tipps", icon: "⚽" },
+  { href: "/tabelle", label: "Tabelle", icon: "📊" },
+  { href: "/rangliste", label: "Rangliste", icon: "🏆" },
+  { href: "/spielplan", label: "Spielplan", icon: "🗓️" },
+  { href: "/ergebnisse", label: "Ergebnisse", icon: "📅" },
+  { href: "/regeln", label: "Regeln", icon: "📋" },
 ];
 
 export function Navigation() {

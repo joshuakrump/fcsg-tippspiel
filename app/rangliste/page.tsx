@@ -5,6 +5,7 @@ import { Navigation } from "@/components/navigation";
 import { AppHeader } from "@/components/app-header";
 import { AppShell } from "@/components/app-shell";
 import { BADGES, syncBadgesForUser } from "@/lib/badges";
+import { EXACT_TIP_POINTS } from "@/lib/scoring";
 
 async function Ranking() {
   const supabase = await createClient();
@@ -43,7 +44,7 @@ async function Ranking() {
   const totalTips = userTips?.length ?? 0;
   const evaluatedTips = userTips?.filter((tip) => finishedMatchIds.has(tip.match_id)) ?? [];
   const totalPoints = evaluatedTips.reduce((sum, tip) => sum + (tip.points ?? 0), 0);
-  const exactTips = evaluatedTips.filter((tip) => tip.points === 7).length;
+  const exactTips = evaluatedTips.filter((tip) => tip.points === EXACT_TIP_POINTS).length;
   const averagePoints = evaluatedTips.length > 0 ? totalPoints / evaluatedTips.length : 0;
 
   const unlockedRows = user ? await syncBadgesForUser(user.id) : [];

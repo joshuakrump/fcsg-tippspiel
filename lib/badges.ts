@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin-client";
+import { EXACT_TIP_POINTS } from "@/lib/scoring";
 
 export const BADGES = [
   { key: "volltreffer", name: "Volltreffer", image: "/badges/volltreffer.webp" },
@@ -33,7 +34,7 @@ export async function syncBadgesForUser(userId: string) {
       return aTime - bTime;
     });
 
-  const exactTips = evaluatedTips.filter((tip) => tip.points === 7).length;
+  const exactTips = evaluatedTips.filter((tip) => tip.points === EXACT_TIP_POINTS).length;
 
   let currentStreak = 0;
   let bestStreak = 0;

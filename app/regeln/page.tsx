@@ -1,12 +1,11 @@
 import { Navigation } from "@/components/navigation";
 import { AppHeader } from "@/components/app-header";
 import { AppShell } from "@/components/app-shell";
+import { EXACT_TIP_POINTS } from "@/lib/scoring";
 
 const pointRules = [
-  ["Richtige Tendenz", "Sieg, Unentschieden oder Niederlage korrekt", "+1"],
-  ["Richtige Tordifferenz", "Die Differenz zwischen Heim- und Auswärtstoren stimmt", "+2"],
-  ["Richtige Heimtore", "Anzahl Tore des Heimteams stimmt", "+1"],
-  ["Richtige Auswärtstore", "Anzahl Tore des Auswärtsteams stimmt", "+1"],
+  ["Richtiger Sieger", "Sieg, Unentschieden oder Niederlage korrekt getippt", "3"],
+  ["Richtige Tordifferenz", "Zusätzlich stimmt die Differenz zwischen den Toren", "+1"],
 ];
 
 const tipRules = [
@@ -49,11 +48,21 @@ export default function RegelnPage() {
               <span className="bg-green-700 text-white font-black px-3 py-1 rounded-full">+2 Bonus</span>
             </div>
           </div>
+
+          <div className="sm:col-span-2 bg-gray-50 border border-gray-200 rounded-2xl p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <span className="font-bold">Falscher Sieger</span>
+                <p className="text-sm text-gray-500 mt-1">Sieger bzw. Unentschieden nicht richtig getippt</p>
+              </div>
+              <span className="bg-gray-200 text-gray-700 font-black px-3 py-1 rounded-full">0</span>
+            </div>
+          </div>
         </div>
 
         <div className="mt-5 bg-green-800 text-white rounded-2xl p-4 sm:p-5">
           <p className="text-sm text-green-200 font-semibold">Maximum pro Spiel</p>
-          <p className="text-xl sm:text-2xl font-black">7 Punkte</p>
+          <p className="text-xl sm:text-2xl font-black">{EXACT_TIP_POINTS} Punkte</p>
         </div>
 
         <div className="mt-6">
@@ -62,7 +71,7 @@ export default function RegelnPage() {
             <p className="text-xs uppercase tracking-wide text-gray-500 font-bold">Endresultat</p>
             <p className="font-black text-lg mt-1 mb-4">FC Zürich 1 : 2 FC St. Gallen</p>
             <div className="space-y-2">
-              {[["1 : 2", "7 Pkt."], ["0 : 1", "3 Pkt."], ["1 : 3", "2 Pkt."], ["1 : 1", "1 Pkt."]].map(([tip, points]) => (
+              {[["1 : 2", "6 Pkt."], ["0 : 1", "4 Pkt."], ["0 : 3", "3 Pkt."], ["1 : 1", "0 Pkt."]].map(([tip, points]) => (
                 <div key={tip} className="flex items-center justify-between bg-white rounded-xl px-3 py-3 border border-gray-100">
                   <span>Tipp <strong>{tip}</strong></span>
                   <span className="font-black text-green-800">{points}</span>

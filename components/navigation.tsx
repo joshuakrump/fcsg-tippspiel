@@ -20,6 +20,11 @@ const items = [
     icon: "📅",
   },
   {
+    href: "/tabelle",
+    label: "Tabelle",
+    icon: "📊",
+  },
+  {
     href: "/rangliste",
     label: "Rangliste",
     icon: "🏆",
@@ -36,7 +41,7 @@ export function Navigation() {
 
   return (
     <nav className="bg-black/20 border border-white/10 rounded-2xl p-1.5 mb-8">
-      <div className="grid grid-cols-5 gap-1.5">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
         {items.map((item) => {
           const active =
             item.href === "/"

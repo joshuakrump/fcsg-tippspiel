@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { PushNotifications } from "@/components/push-notifications";
+import { Announcement } from "@/components/announcement";
 
 function formatKickoff(kickoff: string) {
   return new Date(kickoff).toLocaleString("de-CH", {
@@ -283,6 +284,7 @@ async function ProtectedHome() {
       <AppHeader subtitle="Tippe alle Spiele des FC St. Gallen" />
       <Navigation />
       <UserHeader />
+      <Announcement />
       <div className="mb-10"><PushNotifications /></div>
       <MatchList />
     </>
